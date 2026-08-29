@@ -118,8 +118,13 @@ Every adapter, feature, and migration review should ask:
 
 Do not skip scoring goldens because a UI screenshot “looks ranked”.
 
+## Tooling selected in M1
+
+- Frontend unit/component tests: Vitest 4.1.11 with Testing Library.
+- Backend tests: MSTest.Sdk 4.3.3 on Microsoft Testing Platform.
+- CI: GitHub Actions runs frontend, backend, and disposable Docker Compose smoke checks.
+
 ## Unresolved
 
-- Exact JS/TS test runner and .NET test stack versions (choose from official current docs).
 - Coverage gates, if any.
 - How production-like the first CI runners are (Docker-in-Docker vs hosted testcontainers).

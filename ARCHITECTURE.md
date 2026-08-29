@@ -15,6 +15,8 @@ High-level system shape for the crypto intelligence platform. Product intent liv
 | API contract | Proposed | REST + OpenAPI; generated frontend client/types |
 | Persistence | Proposed | PostgreSQL authoritative; Redis disposable cache/coordination |
 | Local runtime | Proposed | Docker Compose on Docker Desktop |
+| Backend runtime | Proposed | .NET 10 LTS; SDK 10.0.400 and runtime 10.0.11 pinned for M1 |
+| Frontend runtime | Proposed | Node.js 24 LTS; container patch 24.20.0 pinned for M1 |
 | Realtime transport | Future | Polling first; SSE/WebSockets only if latency needs justify it |
 | Distribution | Requirement | No microservices, Kafka, or Kubernetes without a demonstrated need |
 
@@ -42,9 +44,9 @@ flowchart LR
   Worker --> Providers
 ```
 
-**Proposed** local Compose services: `frontend`, `api`, `worker`, `postgres`, `redis`. The API and worker may share one image with different entrypoints. Development Compose overrides enable bind mounts and hot reload; production images are multi-stage and run as non-root.
+**Proposed** local Compose services: `frontend`, `api`, `worker`, `postgres`, `redis`. M1 targets the non-root Vite development stage in Compose so the `/api` proxy is exercised. The production frontend image routes `/api` to the API service on its Docker network. Production frontend, API, and worker images are multi-stage and run as non-root.
 
-Prefer a same-origin production deployment with `/api` routed to ASP.NET Core and static SPA assets served by a web host/CDN. In local development, use Vite's development proxy for `/api` where practical; if origins differ, configure a narrow development-only CORS policy rather than a permissive production policy.
+Prefer a same-origin production deployment with `/api` routed to ASP.NET Core and static SPA assets served by a web host/CDN. The M1 NGINX image provides that route when it is deployed with the API on the same Docker network; another gateway may own it in other environments. In local development, use Vite's development proxy for `/api` where practical; if origins differ, configure a narrow development-only CORS policy rather than a permissive production policy.
 
 ## Ingestion-to-dashboard flow
 
@@ -144,9 +146,9 @@ The MVP runs the worker as a separate process/Compose service from the API while
 **Proposed** defaults, not a vendor selection:
 
 - Structured logs, traces, and metrics with a correlation identifier.
-- Health checks for API, worker liveness, PostgreSQL, and Redis.
+- Separate liveness and readiness checks for API and worker; readiness verifies PostgreSQL and Redis connectivity.
 - Secrets via environment or a secret store; committed samples contain no credentials.
-- Deterministic builds and pinned tool versions.
+- Deterministic builds with lock files, pinned tool versions, and immutable container digests.
 
 ## Frontend integration
 
@@ -182,4 +184,3 @@ Record resolutions in an exec plan or a later revision of this document. Do not 
 - Exact ingestion cadences and retention windows.
 - Authentication/authorization model and alert channels.
 - Whether later latency needs justify SSE/WebSockets or separately deployed workers.
-- .NET and Node LTS versions current at implementation time.

@@ -1,6 +1,6 @@
 # First ranking vertical slice
 
-**Status:** Active execution plan. Implementation is not started. This plan proves the end-to-end architecture before the full indicator catalog.
+**Status:** Active execution plan. M1 was implemented and verified on 2026-08-29; M2 has not started. This plan proves the end-to-end architecture before the full indicator catalog.
 
 Read first: [AGENTS.md](../../../AGENTS.md), [ARCHITECTURE.md](../../../ARCHITECTURE.md), [../../product/product-spec.md](../../product/product-spec.md), [../../design/domain-model.md](../../design/domain-model.md), [../../design/data-pipeline.md](../../design/data-pipeline.md), [../../design/scoring-model.md](../../design/scoring-model.md), [../../engineering/data-sources.md](../../engineering/data-sources.md), [../../engineering/testing-strategy.md](../../engineering/testing-strategy.md).
 
@@ -102,6 +102,15 @@ Implement in order. Do not skip to the dashboard.
 - OpenAPI enabled on the API
 - Vite development proxy for `/api` (or a narrowly scoped development CORS policy if the proxy is not practical)
 
+M1 verification (2026-08-29):
+
+- [x] Strict frontend build, lint, and tests pass
+- [x] Nullable-enabled backend Release build and API/worker tests pass with zero warnings
+- [x] `docker compose up --build` starts all five services healthy
+- [x] Vite and production `/api` proxies, OpenAPI, dependency-aware health JSON, RFC 9457 problem details, and correlation IDs respond correctly
+- [x] Frontend production, API, and worker images build as multi-stage non-root images
+- [x] CI runs frontend, backend, and disposable Compose smoke checks with locked dependencies
+
 ### M2 — Catalog and adapter
 
 - Canonical assets BTC, ETH, SOL
@@ -135,10 +144,10 @@ Implement in order. Do not skip to the dashboard.
 
 ## Acceptance checks
 
-- [ ] A clean `docker compose up --build` starts frontend, API, worker, PostgreSQL, and Redis, and the repository README documents the command
-- [ ] UTC timestamps in API JSON
+- [x] A clean `docker compose up --build` starts frontend, API, worker, PostgreSQL, and Redis, and the repository README documents the command
+- [x] UTC timestamps in API JSON
 - [ ] API precision and unit conventions are documented; exact values use a round-trip-safe wire representation
-- [ ] Worker logs correlation of run id
+- [x] Worker logs correlation of run id
 - [ ] Three assets appear even if one category is inapplicable
 - [ ] Historical score rows retain immutable model and exact feature-input lineage; later runs do not replace prior as-of snapshots
 - [ ] Tests from [../../engineering/testing-strategy.md](../../engineering/testing-strategy.md) that apply to M1–M5 pass
@@ -159,9 +168,8 @@ Implement in order. Do not skip to the dashboard.
 - Exact feature list after doc validation
 - Manifest weights
 - Canonical candle interval for the slice (for example 1h)
-- .NET / Node LTS versions
 - Charting library (can remain unused in M5)
 
 ## Recommended next Codex task
 
-After this documentation set is merged: execute **M1** only (Compose + API/worker/frontend skeletons + OpenAPI + health checks). Do not ingest live market data until M2 records a validated provider.
+Execute **M2** only: record official provider-capability and licensing evidence, then implement the BTC/ETH/SOL catalog plus adapter-local mappings and contract fixtures. Do not implement features or scoring until the validated M2 inputs are recorded.
