@@ -13,6 +13,7 @@ Read the relevant document before changing a subsystem. Do not copy detailed arc
 | Concern | Document |
 | --- | --- |
 | Product scope, workflows, MVP, non-goals | [docs/product/product-spec.md](docs/product/product-spec.md) |
+| Product priorities, sequencing, and validation gates | [docs/product/roadmap.md](docs/product/roadmap.md) |
 | System shape, modules, API, persistence, Docker | [ARCHITECTURE.md](ARCHITECTURE.md) |
 | Conceptual entities and relationships | [docs/design/domain-model.md](docs/design/domain-model.md) |
 | Ingestion, normalization, jobs, timestamps, retries | [docs/design/data-pipeline.md](docs/design/data-pipeline.md) |

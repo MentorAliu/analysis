@@ -2,6 +2,8 @@
 
 **Status:** Requirement, unless marked otherwise.
 
+Delivery priorities and promotion gates are maintained in the [product roadmap](roadmap.md). The active execution plan defines the current implementation scope.
+
 ## Purpose
 
 Help a crypto analyst continuously see which liquid assets deserve attention, why they rank where they do, and whether historical signals were useful after the fact.
@@ -56,17 +58,23 @@ Rankings are research orderings, not trade recommendations and not probabilities
 
 When a composite or category score changes, the product shows what changed in the structured inputs: which features moved, which categories moved, missing-data or quality shifts, and any new catalyst/unlock event attached to the as-of time.
 
+The planned asset detail must distinguish changes in the asset's own inputs from peer/universe movement, model revisions and data-quality changes, preserving before/after snapshot references. A rank improvement caused by declining peers is not evidence that the asset itself improved. Nonlinear attribution must disclose its method and limitations rather than invent exact additive contributions.
+
 Natural-language explanation is a rendering of those structured diffs. It is not a substitute for the numeric model. **Future:** LLM-written narrative over the same structured diff.
 
 ### Watchlists and alerts
 
-**MVP-adjacent / later in the first product year:** users pin assets and receive alerts when scores, categories, or named events cross thresholds.
+**Proposed, after the first vertical slice:** users pin assets and receive alerts when scores, categories, or named events cross thresholds. The first customer-facing experiment is a saved research thesis monitor: record why an asset matters, supporting/opposing evidence, a research horizon and explicit review conditions, then inspect meaningful changes and a versioned review history.
+
+Structured conditions are evaluated deterministically, with met, not met, conflicting and not-evaluable states. Missing or stale evidence must not masquerade as a failed market condition. Begin with already-approved market/derivatives features and one notification channel; deduplicate repeated triggers and allow user-controlled cadence. See the [roadmap's pilot gate](roadmap.md#2--test-a-saved-research-thesis-monitor).
 
 **Unresolved:** alert channels (in-app only, email, webhook) and authentication/identity.
 
 ### Historical signal analysis
 
 Every persisted score/signal should eventually be joinable to subsequent returns and path metrics: 1h, 4h, 1d, 3d, 7d, 14d, 30d, maximum favorable excursion (MFE), and maximum adverse excursion (MAE).
+
+**Proposed priority:** begin forward outcome collection in a subsequent execution plan immediately after the technical slice, and expose benchmark comparisons as horizons mature. Preserve issued time separately from as-of time, exact input/model/universe references and data-quality state. Distinguish originally issued signals from reconstructed research. Freeze outcome and benchmark conventions before evaluation; show unfavorable, pending and incomplete records, sample sizes and coverage. Observational returns are not realized trading profits, and overlapping horizons are not independent evidence.
 
 This workflow answers: “did this scoring-model version have any relationship to later returns, or was it noise?”
 
@@ -89,11 +97,14 @@ The MVP proves the pipeline, not the full indicator catalog.
 
 ### Later product functionality
 
+Sequencing and validation gates are in [roadmap.md](roadmap.md); these items are not additions to the active technical slice.
+
 - Two-stage scanner over a broad liquid universe.
 - Full signal families in [scoring-model.md](../design/scoring-model.md).
-- Asset detail with score-change diffs.
-- Watchlists and alerts.
-- Historical outcome measurement and model comparison.
+- Asset detail with precise score/rank-change explanations and data-quality distinctions.
+- Watchlists and alerts, with a **Proposed** saved research thesis monitor as the first paid-workflow experiment.
+- Forward historical outcome collection, followed by an inspectable signal record with benchmark and model comparisons.
+- **Future, conditional:** comparable token economics and supply-event revision/uncertainty monitoring, subject to validated customer tasks and commercial data rights.
 - Qualitative catalyst extraction (LLM-assisted, not score-authoritative).
 - Calibrated probability estimates, only after evidence exists.
 
