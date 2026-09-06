@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router'
+import { LuArrowUpRight } from 'react-icons/lu'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 export function Workspace() {
@@ -11,7 +12,7 @@ export function Workspace() {
         <CardHeader><CardTitle><h2>No research data yet</h2></CardTitle></CardHeader>
         <CardContent className="space-y-5 text-sm leading-6 text-muted-foreground">
           <p>Data sources have not been connected. This workspace will show observations and rankings when validated data becomes available.</p>
-          <Link to="/about" className="inline-block font-medium text-primary underline underline-offset-4">About this workspace <span aria-hidden="true">↗</span></Link>
+          <Link to="/about" className="inline-block font-medium text-primary underline underline-offset-4">About this workspace <LuArrowUpRight aria-hidden="true" focusable="false" className="inline size-[1em] align-text-bottom" /></Link>
         </CardContent>
       </Card>
     </section>

@@ -1,5 +1,5 @@
 import { Link, Outlet } from '@tanstack/react-router'
-import { config } from '@/lib/config'
+import { config } from '@/app/config'
 
 export function NotFound() {
   return (

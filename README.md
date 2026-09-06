@@ -110,11 +110,16 @@ separate and described below.
 ### Frontend unit and browser tests
 
 Vitest 5.0.0 runs configuration validation and component tests using React Testing
-Library and jsdom. Tests render the real route tree with a fresh memory history.
+Library and jsdom. Tests use fresh application/QueryClient/memory-history instances.
+They cover shared Router/Query context, isolated caches, direct Zod 4 URL validation,
+loader-cache reuse and Table v9 rendering, empty states, stable row identity and
+externally controlled sorting with nonfinancial fixtures.
 Playwright 1.63.0 tests the built SPA in Chromium, Firefox, WebKit and a narrow
 Chromium viewport: empty state, navigation/history, direct links/reload, missing
 pages and keyboard skip-link access. Browser tests fail on console/runtime errors
-or attempted external/API requests. These tests need no backend, data or credentials.
+or attempted external/API requests. A separate development Chromium scenario opens
+the Query/Router inspectors and verifies route changes; production checks ensure
+the inspectors are absent. These tests need no backend, data or credentials.
 
 With the pinned Node/npm versions, from the repository root:
 
@@ -135,8 +140,10 @@ npm --prefix frontend run test:e2e:report
 
 On supported Linux hosts, append `-- --with-deps` to the install command if system
 browser libraries are missing. Browser installation downloads test tools; the
-tests themselves use only `127.0.0.1:4173`. That port must be free: Playwright never
-reuses or stops an existing server. It starts and shuts down its own preview server.
+tests themselves use only `127.0.0.1:4173` (production preview) and `127.0.0.1:4174`
+(development Vite). Both ports must be free: Playwright never reuses or stops an
+existing server. It starts and shuts down its own servers. To run only the
+development inspector check: `npm --prefix frontend run test:e2e:dev`.
 HTML reports are in `frontend/playwright-report/`; failed-test traces/screenshots
 are in `frontend/test-results/`. Both directories are ignored by Git and Docker.
 The narrow project checks responsive layout, not physical mobile-device behavior.
@@ -155,6 +162,7 @@ official Playwright browsers with the same pinned Node/npm toolchain and runs as
 that container. Reports inside this disposable container disappear on exit; use
 the host commands above when retaining interactive traces. Production images also
 require Vitest to pass during their build and contain only static frontend output.
+The Vite production module guard fails if devtools, tests or CLI code is emitted.
 
 Backend tests remain the two executable check projects shown above (they use
 `dotnet run`, not test-framework discovery through `dotnet test`). Operational
@@ -162,6 +170,48 @@ checks exercise HTTP errors/correlation and worker cancellation/health; catalog
 checks cover offline adapters, units, precision and timestamps. `verify-m1.mjs`
 and `verify-m2.mjs` additionally cover service behavior and disposable-database
 integration. Hosted CI and numeric coverage thresholds are not configured yet.
+
+### Frontend integration and component maintenance
+
+`createApplication` supplies the same stable QueryClient to the provider and typed
+Router context. Query owns freshness with its global defaults unchanged; the shell
+makes no data requests or polling. Always define reads with reusable typed
+`queryOptions` factories (`infiniteQueryOptions` for infinite queries), reuse them
+in hooks/loaders, and derive cache keys from their options. Prefer pure, stable
+consumer `select` projections for subsets/view models while retaining full cached
+data. Document any necessary per-query policy beside its feature factory and in
+the active plan; keep test-only policies isolated. Query's strict recommended
+ESLint configuration enforces options usage.
+
+Frontend ownership is feature-driven: `src/app` owns assembly/providers/config/
+layout/devtools; thin `src/routes` entries compose `src/features/workspace`
+components. Keep feature queries/hooks/schemas/selectors with their feature as they
+are introduced. `src/components` (including shadcn `ui`) and `src/lib` are shared;
+they never import features. Features must not import app assembly/routes or another
+feature's internals. Unit tests mirror ownership under `tests/unit/app`,
+`tests/unit/features/workspace` and `tests/unit/components`. See the
+[architecture](ARCHITECTURE.md#frontend-integration) and [agent rules](AGENTS.md#query-and-feature-ownership).
+
+The reusable `DataTable` takes stable typed columns/data, a canonical `getRowId`,
+caption, optional empty state and controlled `sorting`/`onSortingChange` props.
+There is no public table page or financial demo. Query/Router devtools load only
+in development; Table's inspector remains deferred because its unified shell is
+alpha. API client generation and transport validation remain M4.
+
+Use the [pinned official shadcn skill and project conventions](AGENTS.md#frontend-component-workflow).
+With the pinned toolchain, inspect context/docs before component changes:
+
+```powershell
+npm --prefix frontend run ui -- info --json
+npm --prefix frontend run ui -- docs table button
+npm --prefix frontend run ui -- add @shadcn/table --diff
+```
+
+For new components, preview with `--dry-run` and `--view`, then add only reviewed
+items. The local CLI is pinned to 4.21.0; do not use floating `@latest`, reinitialize
+or apply a preset. Preserve new-york/Radix and current styling; use `@/lib/utils`
+and named `react-icons/lu` imports. Component source and license are retained in
+the repository, with provenance and exact versions in the active plan.
 
 ## Development
 

@@ -1,17 +1,14 @@
 import { act, render, screen, within } from '@testing-library/react'
-import { createMemoryHistory, createRouter, RouterProvider } from '@tanstack/react-router'
+import { createMemoryHistory } from '@tanstack/react-router'
 import { expect, test } from 'vitest'
-import { routeTree } from '@/routeTree.gen'
+import { createApplication } from '@/app/application'
+import { ApplicationRoot } from '@/app/providers'
 
 async function renderRoute(path: string) {
-  const router = createRouter({
-    routeTree,
-    history: createMemoryHistory({ initialEntries: [path] }),
-    defaultPendingMinMs: 0,
-  })
+  const application = createApplication(createMemoryHistory({ initialEntries: [path] }))
   await act(async () => {
-    await router.load()
-    render(<RouterProvider router={router} />)
+    await application.router.load()
+    render(<ApplicationRoot application={application} />)
   })
 }
 

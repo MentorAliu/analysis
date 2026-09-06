@@ -82,6 +82,33 @@ skip-link focus. Fail on runtime errors or external/API requests; the shell has
 no financial API contract to mock. Exact compatibility, image pins and verification
 are recorded in the active execution plan; commands are in the root README.
 
+The frontend foundation also tests shared typed Router/Query context, cache
+isolation and direct Zod 4 search validation on test-only routes (including rejection
+before loader I/O and reuse of fresh Query data). Table v9 tests use nonfinancial
+notes to verify semantic rendering, custom cells, empty states, canonical row
+identity across replacement/reordering, and external sorting/reset ownership.
+No test route or fixture is imported by the production application.
+
+Group unit tests by owner: application/config/query fixtures in `tests/unit/app`,
+workspace behavior in `tests/unit/features/workspace`, and reusable components in
+`tests/unit/components`. Test setup stays shared. Use `queryOptions` factories even
+in fixtures and derive cache keys from their options; strict Query lint applies to
+tests as well as source. Application factories preserve global Query defaults.
+Document test-only immutable-cache policies beside fixture options rather than
+changing application defaults. Regression checks verify untouched defaults and
+stable `select` projections: consumers see only their view, complete records remain
+cached, unrelated cache changes retain the selected result's identity, and relevant
+changes reach the consumer. No financial fixture or production request is needed.
+
+Keep all four production Playwright projects. A separate development Chromium
+configuration uses port 4174 to open the actual Query/Router inspectors and verify
+route updates; production tests check their absence. Build-time module inspection
+rejects shipped devtools, test or CLI code. Both browser suites own their servers,
+use zero retries and can run non-root in an isolated Docker container without
+external networking. jsdom stubs only unsupported scrolling; keyboard focus and
+viewport behavior are verified in real browser engines. Full accessibility audits,
+coverage thresholds and CI setup are not established by this foundation.
+
 The following data-driven checks become applicable in M4/M5 using the generated
 OpenAPI client; do not create parallel transport models ahead of that contract:
 

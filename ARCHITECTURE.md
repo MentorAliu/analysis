@@ -150,14 +150,61 @@ The MVP runs the worker as a separate process/Compose service from the API while
 
 ## Frontend integration
 
-**Proposed:**
+**Implemented foundation (2026-09-06):** React + strict TypeScript + Vite SPA,
+TanStack Router/Query, Zod 4 and shadcn/ui with the existing new-york/Radix style.
+`createApplication` owns one QueryClient and injects it into typed Router context
+and `ApplicationRoot`'s provider. Create it once outside React rendering; tests use
+isolated factories and memory histories. Router coordinates route loading with
+`defaultPreloadStaleTime: 0`; Query owns cache freshness. Construct `new QueryClient()`
+with unchanged global Query defaults: no global defaults configuration or setters.
+Feature-required per-query options must document their reason in the owning
+factory and active plan; test-only policies remain isolated. Product queries and
+polling remain future contract-specific work. Pass Query's AbortSignal to transport
+I/O when that integration is implemented.
 
-- React + TypeScript + Vite SPA.
-- TanStack Router for typed routes and search params (rankings filters, asset id, time range).
-- TanStack Query for server state, caching, and polling.
-- shadcn/ui for interface primitives.
-- A financial charting library for candlesticks and time series (**Unresolved** which library).
-- Strict TypeScript.
+**Required frontend ownership:**
+
+```text
+frontend/src/
+  app/                         application factory, providers, config, layout, devtools
+  routes/                      thin file-based Router entries; compose feature components
+  features/
+    workspace/components/      workspace and about views
+  components/                  reusable DataTable
+    ui/                        shared shadcn primitives
+  lib/                         shared utilities and Table features/types
+```
+
+Features own their components, queries, hooks, schemas and selectors; create
+subfolders only when needed. App/routes compose features. Features depend on
+shared code, never app assembly/routes or another feature's internals. Shared
+components/utilities do not depend on features. Keep `@/lib/utils`, shadcn aliases,
+file route URLs and generated route-tree ownership intact. This convention does
+not change the backend modular monolith.
+
+Always define Query reads with reusable typed `queryOptions` factories
+(`infiniteQueryOptions` for infinite queries). Keep keys and functions together in
+the owning feature, reuse options across hooks/loaders and derive cache keys from
+them. Query ESLint `flat/recommended-strict` enforces the options convention.
+Prefer meaningful `select` projections at consumers, retaining complete cached
+responses. Use pure module-level functions, or stable `useCallback` selectors when
+they capture values. Do not force identity selectors or validate/throw in `select`;
+validation belongs in the query function/generated transport boundary.
+
+`DataTable` is a reusable headless Table v9 adapter composed with shadcn Table and
+Button primitives. Callers own stable typed columns/data, canonical row IDs and
+controlled single-column sorting; caption and empty state remain semantic HTML.
+It has no public route, pagination, filtering or financial columns. React Icons
+provides named Lucide icons. Query and Router inspectors receive the actual
+application instances through a development-only lazy import; the production
+build rejects emitted devtools, tests and CLI modules. Table's inspector is deferred
+until its required unified shell meets the stable-only policy.
+
+Zod validates public configuration. Direct Zod 4 Standard Schema URL validation
+and loader/Query cache sharing are verified on a test-only memory route. Generated
+API client/types and transport validation remain M4; no parallel transport model
+is introduced. Rankings filters, asset/time-range pages, product polling and
+financial charts are future work (charting library remains **Unresolved**).
 
 Follow current official documentation listed in [AGENTS.md](AGENTS.md). Prefer each library’s recommended patterns over ad-hoc alternatives.
 

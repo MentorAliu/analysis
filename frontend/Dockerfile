@@ -24,7 +24,7 @@ COPY --from=build --chown=pwuser:pwuser /app/ ./
 RUN chown pwuser:pwuser /app
 USER pwuser
 RUN test "$(node --version)" = "v24.20.0" && test "$(npm --version)" = "11.19.0"
-CMD ["./node_modules/.bin/playwright", "test"]
+CMD ["npm", "run", "test:e2e:run"]
 
 FROM nginx:1.30.4-alpine@sha256:dc5069ad14f19660b141b21236140b91656bf89bbc3e2417c70ae650cd66104c AS production
 COPY frontend/nginx.conf /etc/nginx/nginx.conf

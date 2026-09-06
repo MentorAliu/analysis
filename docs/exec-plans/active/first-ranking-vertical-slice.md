@@ -307,6 +307,163 @@ Retained local verification evidence (ignored): `.artifacts/frontend-test-build-
 
 **Failed: none. Environmental blockers: none for Docker verification. Not rerun:** unchanged backend/M1/M2 service/database checks (their prior results remain above). Native Windows/macOS browser execution was not separately verified. No automated accessibility audit or physical-device certification is claimed; keyboard focus and viewport behavior were checked. CI and coverage thresholds remain future decisions. **Next milestone remains M3 — Features and scores**, after resolving the documented M2 live-source acceptance requirements; neither M3 nor the full vertical slice is complete.
 
+### Frontend integration foundation (2026-09-06)
+
+**Implemented and verified — user-approved foundation follow-up.** Preserves `new-york`, the existing palette/layout, M1/M2 and the offline licensing gate. No public table page, showcase, financial queries/DTOs, new backend endpoints, preset application or M3–M5 implementation. Table inspector is explicitly deferred: its required [unified devtools shell](https://tanstack.com/devtools/latest/docs/overview) is alpha; the user selected stable-only tools.
+
+Implementation checklist:
+
+- [x] Reinspect repository, approved skill and exact registry metadata; record official sources and compatibility.
+- [x] Pin dependencies; run shadcn context/docs and preview component additions before adding them.
+- [x] Share a stable QueryClient through typed Router context/providers with fresh test factories; integrate stable development-only inspectors.
+- [x] Add typed Table v9 rendering/controlled sorting with shadcn primitives and React Icons; verify Zod 4 URL validation in test-only routes.
+- [x] Enable official lint rules; run clean restoration, strict type checking, unit/browser tests and production exclusion checks.
+- [x] Rebuild frontend Docker targets, verify non-root runtimes, preserve visual behavior and update guidance/results.
+
+Exact versions confirmed from official npm metadata before installation (2026-09-06):
+
+| Package | Pin | Official documentation / compatibility decision |
+| --- | --- | --- |
+| `@tanstack/react-table` | 9.2.4 | [React v9 quick start](https://tanstack.com/table/latest/docs/framework/react/quick-start), [sorting](https://tanstack.com/table/latest/docs/framework/react/guide/sorting). Requires Node >=20 / React >=18; use `useTable`, explicit sorting features, stable columns/data and typed `ColumnDef`, not v8/legacy APIs. |
+| `react-icons` | 5.7.0 | [Maintainer README](https://github.com/react-icons/react-icons), [Lucide collection](https://react-icons.github.io/react-icons/icons/lu/). Named `react-icons/lu` imports; React peer `*`; retain MIT package and Lucide ISC notices. |
+| Query / Router devtools | 5.102.8 / 1.167.1 | [Query inspector](https://tanstack.com/query/latest/docs/framework/react/devtools), [Router inspector](https://tanstack.com/router/latest/docs/devtools). Peers accept installed Query 5.102.8, Router 1.170.32 and router-core 1.171.27. Gate a lazy import with `import.meta.env.DEV`; do not enable production entrypoints. |
+| Query / Router ESLint plugins | 5.102.8 / 1.162.0 | [Query flat configuration](https://tanstack.com/query/latest/docs/eslint/eslint-plugin-query), [Router flat configuration](https://tanstack.com/router/latest/docs/eslint/eslint-plugin-router). Both accept ESLint 10; Query accepts TypeScript 6. Use recommended flat configs without disabling correctness rules. |
+| `shadcn` CLI | 4.21.0 | [CLI](https://ui.shadcn.com/docs/cli), [components configuration](https://ui.shadcn.com/docs/components-json), [Table](https://ui.shadcn.com/docs/components/radix/table). Requires Node >=20.18.1; install locally as a dev dependency and invoke via the pinned npm toolchain. No initialization, base switch, preset or global skill installation. |
+
+Retain Query 5.102.8, Router 1.170.32, Zod 4.5.4, React 19.2.8, Vite 8.2.2, TypeScript 6.0.3, Node 24.20.0/npm 11.19.0 and existing test/image pins. Registry endpoint pattern: `https://registry.npmjs.org/<package>/<version>`. No peer overrides; lock all transitive resolutions. [Router context](https://tanstack.com/router/latest/docs/guide/router-context), [external Query loading](https://tanstack.com/router/latest/docs/guide/external-data-loading), [query options](https://tanstack.com/query/latest/docs/framework/react/guides/query-options), [cancellation](https://tanstack.com/query/latest/docs/framework/react/guides/query-cancellation), [testing](https://tanstack.com/query/latest/docs/framework/react/guides/testing), [Zod search validation](https://tanstack.com/router/latest/docs/guide/search-params), [Zod 4](https://zod.dev/) are integration references. Query retains existing no-polling defaults; financial freshness policy remains M4.
+
+Official skill authority: [shadcn `SKILL.md`](https://github.com/shadcn-ui/ui/blob/c257f688cf4de7ec10cc1be84cad29cd4631182c/skills/shadcn/SKILL.md) at immutable revision `c257f688cf4de7ec10cc1be84cad29cd4631182c`, including relevant styling, composition, icon and component-base references. User requirements override floating `@latest` examples and sample icon imports: use shadcn 4.21.0 and `react-icons/lu`. Official registry selection is already authorized. Read actual component docs returned by the CLI, inspect additions with dry-run/diff and preserve existing custom components. Do not invent an `iconLibrary` value unsupported by the shadcn schema.
+
+Component resolution before installation (2026-09-06): pinned CLI `info --json` confirmed Vite, Tailwind v4, Radix base, `new-york`, existing Card only and no preset. `docs table button` returned the [Radix Table](https://ui.shadcn.com/docs/components/radix/table) and [Radix Button](https://ui.shadcn.com/docs/components/radix/button) pages, which were read; `add @shadcn/table @shadcn/button --dry-run` and `--view` previewed two new files without CSS/config changes. Registry output imports `radix-ui` and CVA; resolve `radix-ui` **1.6.7** (React 19 peers supported; [introduction](https://www.radix-ui.com/primitives/docs/overview/introduction), [Slot](https://www.radix-ui.com/primitives/docs/utilities/slot)) and `class-variance-authority` **0.7.1** ([stable installation](https://cva.style/getting-started/installation/)). The registry also requests `cn` **0.2.5** ([maintainer](https://github.com/shadcn-ui/cn), Node >=20); allow it during generation, then adapt generated imports to existing `@/lib/utils` and remove the redundant direct dependency. Do not migrate the existing utility or Card. Versions resolved via official npm package metadata before installation; stable versions only, no peer overrides.
+
+Table v9 uses `useTable`, explicit sorting features and `table.FlexRender`; the [React sorting](https://tanstack.com/table/latest/docs/framework/react/guide/sorting) and [state ownership](https://tanstack.com/table/latest/docs/framework/react/guide/table-state) guides plus installed 9.2.4 declarations/bundled maintainer guidance were consulted. Use the supported `state.sorting` + `onSortingChange` API for this simple externally controlled component. Keep data/column/identity function references stable at the caller; external atoms and performance optimizations require a demonstrated need. No v8 constructor, filtering or pagination.
+
+Final resolved component/tool internals include `@radix-ui/react-slot` **1.3.3**, `@tanstack/table-core` **9.2.4**, Query inspector core **5.102.8**, Router inspector core **1.168.1**. Router's React Store **0.9.3** and Table's nested React Store **0.11.1** remain separately resolved according to their supported dependency ranges; no forced deduplication. `cn` **0.2.5** remains only as a transitive CLI dev dependency. Every direct dependency has an exact stable version matching `package-lock.json`; lockfile SHA-256 `8BF486785D594BB9E8CA6F48D119D3EC413EB0EF62DE77FCDE33369BCD085B8F`.
+
+Project adaptations: Table/Button use existing `@/lib/utils`; Button exports only its component to preserve the existing Fast Refresh lint rule. Existing semantic palette values remain unchanged; additional aliases supply primitive foreground/hover/focus colors and a standard destructive token for the new Button variant. No existing page uses that variant. Existing Card and `components.json` are unchanged. The workspace arrow uses named `react-icons/lu`; React Icons MIT, Lucide ISC and applicable Feather MIT notices are retained in `frontend/public/react-icons-licenses.txt` and the production artifact. Vendored Table SHA-256 `75C2355A58861229029512B6F221DDEE4E5A0E3326BFA5D2D3D0BCCF35E25CD6`; Button `16403632A7E4C9A13B88E64CC77C2F24F0D6065FBF07027543172BA740E01BC9`. Existing `SHADCN-LICENSE.md` covers the added primitives.
+
+Verification tooling references: [Vite plugin hooks](https://vite.dev/guide/api-plugin), [Rolldown emitted chunk/module information](https://rolldown.rs/reference/Interface.OutputChunk), [Playwright browser APIs](https://playwright.dev/docs/api/class-page), [visual comparisons](https://playwright.dev/docs/test-snapshots), and [Node 24.20.0 subprocess documentation](https://github.com/nodejs/node/blob/v24.20.0/doc/api/child_process.md). The Vite build hook audits emitted modules rather than relying only on hidden inspector controls. A disposable-container negative check deliberately imports devtools and must fail that guard.
+
+Verification evidence (2026-09-06, pinned Linux Docker toolchain):
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| Clean dependency installation | Passed | Docker dependencies stage ran `npm ci` as `node`, exact Node 24.20.0/npm 11.19.0, strict peer checks, 636 packages installed / 637 audited, zero vulnerabilities. No peer overrides. |
+| Strict types, official recommended lint configs, Vitest, production build | Passed | 5 test files / **18 tests**; app/config/test TypeScript compiled; ESLint zero warnings/errors; Vite production build passed. `build-production-final.log` SHA-256 `214D7E1EF7C7F8157FFF04C97647C33A4F4E89766A15EC7BAA09898E55B260AA`. |
+| Router/Query/Zod/Table coverage | Passed | Shared provider/context client survives StrictMode/rerenders; factory caches isolated; test-only direct Zod 4 URL validation defaults/rejects invalid input before loading; loader and hook share fresh cached data. Table semantics, custom cells, caption/empty state, canonical row identity, externally owned ascending/descending/clear sorting and reset verified with note fixtures. |
+| Existing production browser projects | Passed | **16/16**, Chromium/Firefox/WebKit/narrow Chromium; existing shell scenarios retained. No runtime errors, API/external requests, inspector controls or devtool resource loads. `browser-r1.log` includes these passes and the historical development test failure below. |
+| Development inspectors | Passed after locator correction | **1/1** Chromium development scenario; Query opens/closes with an empty actual cache, Router panel follows `/` → `/about` → browser back. No product requests/errors. `browser-dev-r2.log` SHA-256 `2B75F8B3664BA93599ACA7FBCD318A24B1DEA8C313EC05EBA48698D673C6F4FA`. Runs under `pwuser` UID **1001**, `--network none`; no backend required. |
+| Production exclusion | Passed | 124 rendered modules audited; no devtools/test/CLI modules. Forced devtools import in a disposable container correctly failed the build (expected exit 1; negative-check wrapper passed). Final nginx contains static assets/notices, no `/app/src`, `/app/tests` or `/app/node_modules`. |
+| Style and keyboard preservation | Passed | Existing keyboard skip-link/navigation scenarios pass in all four projects. Before/after Chromium captures at 1280×900 and 390×844 have identical palette/font and body/header/main/footer/h1/Card geometry records; matching JSON SHA-256 `DAE11C96246719A0B85C3B8BF86B4ABA7A8905EA57B036535B522896C2EC6691`. Screenshots inspected. Existing Card source hash remains `525C4BB2C051987BE64DF0E92E1D90174912B219BF541E24FFBC4A3406DE49E8`. |
+| Docker targets and runtime | Passed | `e2e`, `development`, `production` rebuilt. Actual development UID **1000** and nginx UID **101**; both healthy; `/` and `/about` load, development inspector module served, production `/healthz` returns 200. Runtime containers use `network=none`, no host ports or volumes. |
+| Shutdown and cleanup | Passed | nginx exits **0**, Vite **143** after SIGTERM (documented M1 behavior), no OOM/forced kill. Task containers removed, existing `analysis-m1-20260905_postgres-data` retained and unrelated services untouched. |
+
+Local evidence, reports, failed-run traces and before/after screenshots are retained under ignored `.artifacts/frontend-foundation-20260906/`. Earlier failures are preserved: sort-action text composition required a separating text node; the Zod rejection test originally assumed an error-name string instead of checking validation issues; Router devtools overrides its toggle label with `Open TanStack Router Devtools`, so the browser locator was corrected and ineffective override props removed. All affected checks were rerun successfully. The final production static JS/CSS hashes match the browser-verified build; the subsequent addition is the icon license notice asset.
+
+Changed scope: `frontend/` manifest/lockfile, application/cache factories, root context/provider, development inspectors, Table v9 adapter and shadcn Table/Button, workspace icon, semantic CSS tokens, license notices, lint/build guard, Vitest/Playwright tests/configuration and Docker test command; `AGENTS.md`, `ARCHITECTURE.md`, `README.md`, testing guidance and this plan. Backend, Compose, financial models/adapters and existing research guidance are unchanged (research guidance SHA-256 remains `BD21BBCCE77D843826B92258047F700CAE1874F6FCA4980E3750120FED618316`).
+
+**Remaining failed checks: none. Unavailable Docker checks: none. Not rerun:** unchanged backend compilation/operational/catalog/M1/M2 verifiers and full five-service Compose checks; their historical evidence remains above. Native Windows/macOS browser execution, full accessibility audit, CI and coverage thresholds are not claimed. The existing Router CLI `replaceRouteChunk` circular-import warning remains non-blocking. Table has no product page, filtering, pagination or inspector; financial requests and generated transport/client validation remain M4. **Next milestone: M3 — Features and scores, after the outstanding M2 licensing/access/coverage acceptance gate.** M3–M5 and the overall vertical slice remain incomplete.
+
+### Frontend Query conventions and feature structure — 2026-09-06
+
+**Completed; authorized frontend-only follow-up.** Preserved the completed M1/M2
+offline work and frontend foundation, all exact dependency/tool/image pins and the lockfile.
+This decision supersedes the earlier application-wide Query overrides; historical
+verification above describes the earlier implementation and remains preserved.
+
+Implementation and verification checklist:
+
+- [x] Move application assembly/config/layout/devtools into `src/app`, keep thin
+  file routes, and move workspace/about components into `src/features/workspace`.
+  Keep shared components/primitives and utilities outside features. Group unit
+  tests by owner without changing the existing browser projects or route URLs.
+- [x] Construct `new QueryClient()` without global defaults or default setters.
+  Require reusable typed `queryOptions` factories (and `infiniteQueryOptions` for
+  future infinite queries); derive cache keys from their returned options. Enable
+  installed Query ESLint `flat/recommended-strict` without peer/package changes.
+- [x] Prefer meaningful, pure, stable consumer-level `select` projections. Preserve
+  complete cache data; validate in the query function/generated boundary, never in
+  `select`. No identity selectors, fake product queries, polling or transport DTOs.
+  Any justified per-query policy belongs in its feature factory with its reason;
+  test-only policies remain local to test fixtures.
+- [x] Verify default configuration, shared Router/Query context, cache isolation,
+  Zod URL validation and selector/cache behavior; retain all Table/shell coverage.
+- [x] Run strict type checking/lint, Vitest, production build, all production
+  Playwright projects and development inspectors. Rebuild Docker test/development/
+  production targets; verify non-root health/shutdown, production exclusion
+  (including a negative guard check), visual/keyboard preservation and cleanup.
+- [x] Update repository, architecture, testing and setup guidance; record actual
+  verification results and limitations without starting M3.
+
+Official evidence consulted before implementation:
+
+- [Query options](https://tanstack.com/query/latest/docs/framework/react/guides/query-options):
+  colocate key/function, reuse across hooks/loaders/cache calls, apply projections
+  at the consumer; infinite queries have a separate typed options helper.
+- [Important defaults](https://tanstack.com/query/latest/docs/framework/react/guides/important-defaults):
+  retain Query's stale/refetch/retry/garbage-collection/structural-sharing behavior.
+  Absence of queries already means the foundation performs no product requests.
+- [Render optimizations/select](https://tanstack.com/query/latest/docs/framework/react/guides/render-optimizations):
+  `select` observes successful cached data without replacing it; reuse module-level
+  selectors or `useCallback` when captures require it. Do not throw/validate there.
+- [Query ESLint configurations](https://tanstack.com/query/latest/docs/eslint/eslint-plugin-query)
+  and [prefer-query-options](https://tanstack.com/query/latest/docs/eslint/prefer-query-options):
+  installed **5.102.8** exports `flat/recommended-strict`, adding the options rule to
+  the recommended correctness rules. Verified against installed maintainer source.
+- [Router file routing](https://tanstack.com/router/latest/docs/routing/file-based-routing):
+  retain the route plugin/generated tree and thin entries. Router's existing
+  `defaultPreloadStaleTime: 0` delegates freshness to Query and is not a Query override.
+
+No new libraries or tools are introduced. Retain Query **5.102.8**, Router
+**1.170.32**, Zod **4.5.4**, Table **9.2.4**, React **19.2.8**, Vite **8.2.2**,
+TypeScript **6.0.3**, Node **24.20.0 LTS**/npm **11.19.0**, shadcn **4.21.0**,
+Vitest **5.0.0**, Playwright **1.63.0**, ESLint **10.10.0**, all other foundation
+pins and the exact Docker base digests recorded above. Compatibility remains the
+previously verified stable release set; this follow-up adds no peer overrides or
+lockfile changes. Backend structure and all provider/M2 acceptance gates remain
+unchanged. **M3 — Features and scores** remains next after the outstanding M2 gate.
+
+Verification evidence (2026-09-06, pinned Linux Docker toolchain):
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| Clean install | Passed | Uncached `dependencies` target ran `npm ci` as Node UID 1000 using Node 24.20.0/npm 11.19.0, strict peers and retained lockfile; 636 packages installed / 637 audited, zero vulnerabilities. `clean-install.log` SHA-256 `09E7778AE9B502A3F38BD495943DCFB6F34997859B14989601DBCE3D0FF3955D`. No npm upgrade or dependency change. |
+| Strict lint, types, unit tests and production build | Passed | Query strict recommended + Router recommended configs, zero lint warnings/errors; `tsc -b` passes; **6 files / 20 Vitest tests** pass. `build-e2e-r3.log` SHA-256 `6718D564BC0BA4169F3B0AA704FED83EB093F13D204A418427E0428611E8D86F`. |
+| Query policies and integration | Passed | Factory global defaults are empty; source audit finds no global default configuration/setters. Shared context/client, independent caches and all Zod/Table/shell checks retained. Consumer `select` retains complete cached notes; unchanged input/function avoids recomputation, unrelated cache changes retain selected object identity, relevant changes reach the consumer. A disposable inline-query fixture fails specifically on `prefer-query-options` as expected. |
+| Browser projects and inspectors | Passed | **16/16** production scenarios in Chromium, Firefox, WebKit and narrow Chromium; **1/1** development inspector scenario. No API/external requests or runtime errors, keyboard/navigation preserved, actual Query/Router inspectors work and are absent from production. Network-isolated test container UID **1001**. `browser-r1.log` SHA-256 `2E80CAAFE5DD1E289EF69E226C7FFF8B8B18051052384DD1EC4BFBD78A5A8A9D`. |
+| Visual preservation | Passed | Desktop 1280×900 and mobile 390×844 captures inspected. Palette/font/layout records match the earlier foundation exactly, SHA-256 `DAE11C96246719A0B85C3B8BF86B4ABA7A8905EA57B036535B522896C2EC6691`. Manifest, lockfile, shadcn config, CSS and all three UI primitive hashes match the pre-refactor snapshot. |
+| Docker/runtime/production boundary | Passed | Test, development and production targets rebuilt; development UID **1000**, nginx UID **101**, both healthy. `/` and `/about` load; relocated development-tools module serves successfully; production `/healthz` succeeds. Build audits **124 rendered modules**, excludes tests/devtools/CLI and rejects a forced relocated devtools import. nginx has no source/tests/node_modules; all six static files match the browser-verified build. Runtime containers have no network, ports or mounts. |
+| Shutdown and preservation | Passed | nginx exits **0**, Vite **143** on SIGTERM within the 10-second stop timeout, no OOM/forced kill. All task containers removed. Existing `analysis-m1-20260905_postgres-data` retained; backend, Compose and research guidance unchanged. |
+
+Evidence and browser reports are retained under ignored
+`.artifacts/frontend-query-structure-20260906/`. Preserve two resolved initial
+failures: `build-e2e-r1.log` caught a test fixture capture missing from its query
+key; the fixture now uses a shared options factory and proves cache isolation by
+updating only the second cache. `build-e2e-r2.log` caught possibly undefined mock
+call access; expected fixture labels are now explicit and checked against the
+loader. No rule suppression/non-null assertion was added; all affected checks
+passed in run 3. The existing Router CLI `replaceRouteChunk` circular-import
+warning remains non-blocking.
+
+Changed files in this follow-up: moved `src/lib/{application,query-client,config}`
+and application/provider/layout/devtools components into `src/app`, moved
+`src/pages/{workspace,about}` into `src/features/workspace/components`, updated
+`src/main.tsx`/the three route entry imports, strict Query lint and Vite's relocated
+devtools exclusion. Regrouped five unit-test files, updated their imports/options
+and Zod projection assertions, and added `app/query-select.test.tsx`. Updated
+`AGENTS.md`, `ARCHITECTURE.md`, `README.md`, testing strategy and this plan. No
+dependency, lockfile, image pin, UI primitive, CSS, browser scenario, endpoint,
+transport contract, generated client, backend or provider changes in this follow-up.
+
+**Remaining failed checks: none. Unavailable checks: none within this frontend
+scope. Not rerun:** unchanged backend compilation/M1/M2 and five-service Compose
+verifiers; earlier evidence remains above. Native Windows/macOS browser runs,
+full accessibility audit and CI/coverage gates remain outside this verification.
+There are still no product queries; the `select` behavior is demonstrated with
+test-only nonfinancial fixtures. The M2 live licensing/access/coverage gate is
+still outstanding. **Next milestone: M3 — Features and scores, after that M2
+acceptance gate.** M3–M5 and the overall vertical slice remain incomplete.
+
 ### M3 — Features and scores
 
 - Feature jobs for the approved 15–25
