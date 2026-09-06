@@ -88,7 +88,7 @@ try {
   const openapi = await get('/api/openapi/v1.json')
   assert.equal(openapi.status, 200)
   assert.match(openapi.body.openapi, /^3\.1\./)
-  assert.deepEqual(Object.keys(openapi.body.paths).sort(), ['/api/health/live', '/api/health/ready'])
+  assert.deepEqual(Object.keys(openapi.body.paths).sort(), ['/api/health/live', '/api/health/ready', '/api/v1/rankings'])
   assert.equal((await get('/api/openapi/v1.json', frontend)).status, 200)
   assert.equal((await get('/api/health/ready', frontend)).body.status, 'Healthy')
   assert.equal((await fetch(frontend, { signal: AbortSignal.timeout(6000) })).status, 200)

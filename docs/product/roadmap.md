@@ -1,6 +1,6 @@
 # Product roadmap
 
-**Updated:** 2026-09-05.
+**Updated:** 2026-09-06.
 
 **Status:** Requirement for product sequencing and promotion gates. Feature designs marked **Proposed** remain subject to a subsequent execution plan; **Future** items are conditional. Inclusion is not evidence of implementation, predictive performance, or customer demand.
 
@@ -16,7 +16,7 @@ Priorities follow the [feature research](../research/feature-research-2026-09-05
 
 | Order | Roadmap item | Status | Exit or promotion gate |
 | --- | --- | --- | --- |
-| 0 | BTC/ETH/SOL technical ranking slice | Requirement; M1 complete; M2 private-use ingestion verified for Kosovo; M3–M5 not started | Complete M3–M5 and the active plan's remaining acceptance checks. Review commercial data rights before sharing/monetization. |
+| 0 | BTC/ETH/SOL technical ranking slice | Requirement; M1–M4 verified for private single-user research; M5 unstarted | Complete M5 and remaining active-plan gates. M4 exposes persisted rankings through a generated, validated contract; M3's 75 reconstructed scores establish replay/persistence correctness, not predictive effectiveness. Review wider data rights before sharing/monetization. |
 | 1A | Forward signal recording and outcome collection | Proposed; first work after the slice | Reproducible original records, predefined outcome conventions and benchmarks, and passing integrity checks. |
 | 1B | Asset detail with precise change explanations | Requirement for the planned explanation workflow; after the slice | Correctly distinguish asset, peer/universe, model and data-quality changes. |
 | 2 | Saved research thesis monitor | Proposed; first customer-facing paid-workflow experiment | Correct reviews, useful repeat usage and evidence of paid renewal under a predefined pilot protocol. |

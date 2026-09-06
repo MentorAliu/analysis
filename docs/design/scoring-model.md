@@ -4,6 +4,15 @@
 
 This is the analytical framework. Pipeline execution is in [data-pipeline.md](data-pipeline.md). Concepts are in [domain-model.md](domain-model.md).
 
+**Implemented M3:** [slice1-v1](../../backend/src/Analysis.Domain/Scoring/Manifests/README.md)
+is the concrete 21-definition BTC/ETH/SOL subset. Its manifest is the sole numerical
+specification; broader families/examples below are not extra implemented features.
+Explicit T/K input capture, immutable lineage, qualified partial scores and local
+replay are implemented. Regime is a category for alts, inapplicable for BTC.
+Normalization uses fixed thresholds, not three-asset peer percentiles. Quality
+measures usable directional weight; context coverage is separate and provider
+agreement remains unassessed with single sources. Predictive validation is future.
+
 ## Purpose
 
 Turn normalized features into inspectable, reproducible ranks. The first output is a **composite score** plus **bullish confidence** and **bearish confidence** scores. These are heuristic constructs. They are not probabilities of profit and not expected returns.
@@ -158,7 +167,7 @@ Probability language is allowed only after a documented evaluation: defined hori
 
 ## Unresolved
 
-- Exact feature formulas, windows, and weights (including the MVP 15–25).
+- Predictive suitability of the frozen M3 formulas, windows and weights; later versions require evidence and a new plan.
 - Peer-set definition for cross-sectional normalization once the universe grows.
-- Whether regime is a category, a multiplier, or both.
+- Whether a later validated regime model should replace M3's explicit category.
 - Calibration method and probability mapping, deferred until outcomes exist.

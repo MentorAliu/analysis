@@ -4,6 +4,14 @@
 
 This document defines the language the rest of the system must use. Persistence details belong in later implementation work. Pipeline movement of these concepts is in [data-pipeline.md](data-pipeline.md). Scoring semantics are in [scoring-model.md](scoring-model.md).
 
+M3 implements the bounded observation-to-score subset. A batch fixes universe,
+T, K, creation time and reconstruction status. Feature sets retain every
+definition's state/applicability, units, window evidence and observation/conflict
+keys. Each score binds its asset/as-of/model to the exact feature snapshot;
+category scores and context coverage stay distinct. See the [M3 contract](../../backend/src/Analysis.Domain/Scoring/Manifests/README.md)
+and EF migration for persistence. Outcomes, events and interpretations below
+remain conceptual future entities.
+
 ## Principles
 
 - Canonical domain types are independent of any one vendor payload.

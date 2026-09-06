@@ -7,11 +7,15 @@ RUN dotnet restore backend/Analysis.slnx --locked-mode
 RUN dotnet build backend/Analysis.slnx --configuration Release --no-restore
 RUN dotnet run --project backend/tests/Analysis.OperationalChecks --configuration Release --no-build --no-restore
 RUN dotnet run --project backend/tests/Analysis.CatalogChecks --configuration Release --no-build --no-restore
+RUN dotnet run --project backend/tests/Analysis.ScoringChecks --configuration Release --no-build --no-restore
+RUN dotnet run --project backend/tests/Analysis.RankingsChecks --configuration Release --no-build --no-restore
 RUN cd backend && dotnet tool restore \
     && dotnet ef migrations has-pending-model-changes --project src/Analysis.Infrastructure --configuration Release --no-build
 RUN dotnet publish backend/src/Analysis.Api --configuration Release --no-build --no-restore --output /out/api \
     && dotnet publish backend/src/Analysis.Worker --configuration Release --no-build --no-restore --output /out/worker \
-    && dotnet publish backend/tests/Analysis.CatalogChecks --configuration Release --no-build --no-restore --output /out/checks
+    && dotnet publish backend/tests/Analysis.CatalogChecks --configuration Release --no-build --no-restore --output /out/checks \
+    && dotnet publish backend/tests/Analysis.ScoringChecks --configuration Release --no-build --no-restore --output /out/scoring-checks \
+    && dotnet publish backend/tests/Analysis.RankingsChecks --configuration Release --no-build --no-restore --output /out/rankings-checks
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0.11-noble@sha256:a4556ed033fa96f984bb7a8d348851cb2d36b1281dd2420070045f664fbb5f94 AS runtime
 WORKDIR /app
@@ -33,3 +37,11 @@ ENTRYPOINT ["dotnet", "Analysis.Worker.dll"]
 FROM runtime AS m2checks
 COPY --from=build /out/checks/ ./
 ENTRYPOINT ["dotnet", "Analysis.CatalogChecks.dll"]
+
+FROM runtime AS m3checks
+COPY --from=build /out/scoring-checks/ ./
+ENTRYPOINT ["dotnet", "Analysis.ScoringChecks.dll"]
+
+FROM runtime AS m4checks
+COPY --from=build /out/rankings-checks/ ./
+ENTRYPOINT ["dotnet", "Analysis.RankingsChecks.dll"]

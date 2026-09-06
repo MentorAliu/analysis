@@ -13,7 +13,8 @@ CMD ["./node_modules/.bin/vite", "--host", "0.0.0.0"]
 
 FROM dependencies AS build
 COPY --chown=node:node frontend/ ./
-RUN npm run lint && npm test && npm run build
+COPY --chown=node:node contracts/openapi/ /contracts/openapi/
+RUN npm run api:check && npm run lint && npm test && npm run build
 
 FROM mcr.microsoft.com/playwright:v1.63.0-noble@sha256:eff16c30e6f3f4af0a03fa4b706120d5e9b0891c344a27d64559aff5900a4a27 AS e2e
 WORKDIR /app

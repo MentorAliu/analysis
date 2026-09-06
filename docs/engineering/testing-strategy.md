@@ -29,6 +29,24 @@ It retains its own collected-data volume/local configuration and stops its
 containers; it never runs against a shared database or benchmarks provider
 availability. Live payloads remain private and are not committed as fixtures.
 
+M3 adds the package-free `Analysis.ScoringChecks` executable. Independent examples
+and vectors cover decimal rounding/square root, feature states, exact weights,
+confidence non-complements, context isolation, history/units/cutoffs and conflicts.
+`scripts/verify-m3.mjs` tests populated-M2 upgrades, disposable rollback,
+concurrency, sealed children, UPDATE/DELETE/TRUNCATE rejection, invalid lineage,
+actual worker SIGTERM, replay, PostgreSQL recreation and Redis independence.
+No numeric/test-framework dependency was introduced. Production images exclude
+both M2 and M3 check assemblies and fixtures.
+
+The separately authorized `scripts/verify-m3-private.mjs` acquires one seven-day
+batch under existing M2 limits, then requires 75 ready scores and all applicable
+features usable over 25 hours. Repeated scoring/replay uses only the internal
+database network. A durable claim prevents automatic batch retries; missing
+history cannot be hidden by changed thresholds, providers or windows. Reports
+separate failures and unavailable gates and retain private data/configuration.
+M1/M2 regressions remain required. Hash-identical frontend inputs need no browser
+suite rerun for this backend-only milestone.
+
 ## Layers
 
 ### Unit tests
@@ -84,6 +102,17 @@ Schema migrations apply on empty and on a representative snapshot; rollback stor
 - Authz when auth exists
 - Rankings query params reject invalid filters
 
+**Implemented M4:** package-free `Analysis.RankingsChecks` exercises the real
+Kestrel endpoint/OpenAPI with a synthetic reader, exact decimal/UTC mapping,
+ordering/readiness, request rejection before reads, sanitized errors and actual
+HTTP cancellation. `scripts/verify-m4.mjs` owns a fresh PostgreSQL database and
+checks read-only Repeatable Read, exact/latest/model isolation, concurrent
+publication, rejected corrupt snapshots, schema refusal, database cancellation,
+Redis independence and unchanged complete database hashes. It compares the
+running API/OpenAPI with the committed schema and regenerated frontend files,
+checks host/origin/loopback restrictions, and verifies Production default denial.
+Never run private acquisition scripts or mount retained volumes for M4 checks.
+
 ### Frontend tests
 
 Follow current official React, Vite, TanStack Router, TanStack Query, Zod, and shadcn/ui testing guidance.
@@ -94,7 +123,7 @@ configuration and the shell with isolated memory histories. Playwright 1.63.0
 tests the production bundle in Chromium, Firefox, WebKit and a narrow Chromium
 viewport, including navigation/history, reload, missing routes and keyboard
 skip-link focus. Fail on runtime errors or external/API requests; the shell has
-no financial API contract to mock. Exact compatibility, image pins and verification
+no financial requests. Exact compatibility, image pins and verification
 are recorded in the active execution plan; commands are in the root README.
 
 The frontend foundation also tests shared typed Router/Query context, cache
@@ -124,8 +153,15 @@ external networking. jsdom stubs only unsupported scrolling; keyboard focus and
 viewport behavior are verified in real browser engines. Full accessibility audits,
 coverage thresholds and CI setup are not established by this foundation.
 
-The following data-driven checks become applicable in M4/M5 using the generated
-OpenAPI client; do not create parallel transport models ahead of that contract:
+M4 adds `tests/unit/features/rankings` using a test-only response exported by the
+backend checks. It verifies generated success/problem validation, exact strings,
+integer types, rejected malformed responses, cache identity/full response,
+untouched Query defaults and actual Fetch signal cancellation. The frontend image
+build runs `api:check` before lint/unit/typecheck/production build; synthetic data
+and unused rankings transport never enter the rendered application.
+
+The following data-driven checks become applicable in M5 using the generated
+OpenAPI client; do not create parallel transport models:
 
 - Router search params round-trip rankings filters
 - Query polling/error states

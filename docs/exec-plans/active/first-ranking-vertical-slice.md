@@ -1,6 +1,6 @@
 # First ranking vertical slice
 
-**Status:** Active execution plan. M1 and M2 are implemented and verified for the user's private, single-user use from Kosovo (2026-09-06). The bounded M2 live acceptance passed with all required data series. Commercial sharing/redistribution is deferred and requires a new rights review. **Next milestone: M3 — Features and scores.** M3–M5 have not started; the overall vertical slice is not complete.
+**Status:** Active execution plan. M1–M4 are implemented and verified for private single-user research (2026-09-06). M3's single seven-day Kosovo acquisition and 75-score acceptance passed; M4 reads persisted scores and was verified with synthetic disposable data. Commercial sharing/redistribution requires a separate rights review. **Next milestone: M5 — Ranking dashboard**, requiring its own authorization. M5 remains unstarted; the overall vertical slice is not complete.
 
 Read first: [AGENTS.md](../../../AGENTS.md), [ARCHITECTURE.md](../../../ARCHITECTURE.md), [../../product/product-spec.md](../../product/product-spec.md), [../../design/domain-model.md](../../design/domain-model.md), [../../design/data-pipeline.md](../../design/data-pipeline.md), [../../design/scoring-model.md](../../design/scoring-model.md), [../../engineering/data-sources.md](../../engineering/data-sources.md), [../../engineering/testing-strategy.md](../../engineering/testing-strategy.md).
 
@@ -665,18 +665,287 @@ acceptance gate.** M3–M5 and the overall vertical slice remain incomplete.
 
 ### M3 — Features and scores
 
-- Feature jobs for the approved 15–25
-- Scoring job writing category, composite, bullish/bearish confidence, data quality
-- Idempotent, append-only score persistence with exact feature-snapshot lineage
-- Golden vector tests
+**Implemented and verified (2026-09-06).** The user approved the
+M3 deterministic feature/scoring plan. M2's private-use acceptance has passed;
+earlier follow-up sections mentioning an outstanding M2 gate describe historical
+state and do not reopen that gate. Commercial sharing remains outside this scope.
+
+- [x] Freeze `slice1-v1`: 21 named features, 4h/24h/72h research windows,
+  provisional normalization/direction/weights and exact decimal numeric rules.
+  The embedded Domain scoring manifest is the numerical source of truth.
+- [x] Add pure feature/scoring functions, canonical Application read/store ports,
+  explicit UTC as-of and knowledge cutoff, and reconstruction labels.
+- [x] Add an additive EF migration for immutable model, input/feature and score
+  snapshots with observation/quarantine lineage, atomic three-asset publication,
+  model/as-of deduplication, database immutability and snapshot-child guards.
+- [x] Add explicit `--score-once` and read-only `--replay-scores` commands;
+  default worker startup remains operational-only and scoring has no HTTP clients.
+- [x] Verify independent arithmetic/golden vectors, applicability/readiness,
+  cutoff/late-arrival isolation, precision/UTC/identity, migration/persistence,
+  duplicate/concurrent writes, rollback/cancellation and M1/M2 regression checks.
+- [x] After offline checks and official private-use source revalidation, make
+  exactly one seven-day M2 ingestion batch into a new private database. Freeze
+  its window ending at UTC midnight two days before execution. Calculate 25
+  consecutive hourly batches ending one hour before that window end: 75 ready
+  asset scores with all applicable features usable. Repeat scoring/replay locally
+  without another provider batch; preserve data and report actual coverage.
+- [x] Record evidence, hashes, failures/skips/unavailable checks and cleanup;
+  update affected design/setup guidance. Stop before M4.
+
+The approved numerical specification is the embedded [slice1-v1 manifest](../../../backend/src/Analysis.Domain/Scoring/Manifests/slice1-v1.json),
+with algorithm/edge-case conventions in its [README](../../../backend/src/Analysis.Domain/Scoring/Manifests/README.md).
+This plan intentionally does not maintain parallel numerical constants. All
+thresholds, weights and direction choices remain unvalidated heuristics.
+
+Implementation details and any edge-case resolutions must be recorded beside
+the manifest. Preserve existing M2 observations/adapters/migration, private-use
+destinations and budgets, dependencies/images, frontend and retained databases.
+No rankings API/client/dashboard, scheduling, scanner, LLM, outcomes, trading,
+credentials, commercial sharing, deployment or Git commit/push is authorized.
+
+Official guidance consulted during planning and implementation: [decimal](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/builtin-types/floating-point-numeric-types),
+[PostgreSQL numeric](https://www.postgresql.org/docs/18/datatype-numeric.html),
+[snapshot isolation](https://www.postgresql.org/docs/18/transaction-iso.html),
+[advisory locks](https://www.postgresql.org/docs/18/explicit-locking.html),
+[transaction identities](https://www.postgresql.org/docs/18/functions-info.html),
+[triggers](https://www.postgresql.org/docs/18/sql-createtrigger.html),
+[EF transactions](https://learn.microsoft.com/en-us/ef/core/saving/transactions),
+[EF migrations](https://learn.microsoft.com/en-us/ef/core/cli/dotnet),
+[Npgsql UTC](https://www.npgsql.org/doc/types/datetime.html),
+[funding frequency changes](https://www.bybit.com/en/help-center/article/Introduction-to-Funding-Rate).
+Documentation establishes supported mechanisms and input semantics, not tested
+compatibility of this implementation or predictive performance.
+
+#### M3 private-use revalidation — 2026-09-06 14:51 UTC
+
+Re-read the official rendered terms and current documentation before acquisition.
+The reviewed scope remains personal local research using the existing official
+public endpoints, with incidental private provenance storage and no sharing,
+resale, competitive service, account operations or provider benchmarking. This
+is the same limited-use interpretation recorded for M2, not an unrestricted
+data licence or an independent legal determination.
+
+- [Binance's current terms PDF](https://bin.bnbstatic.com/static/cms/cg08ou2ak0tn7mcplvfg/file/bf4879710c904b991848972ec4818ba2cf9e4ce314c09adae84fa2750d3477f7.pdf),
+  reached from its rendered terms page, still has effective date 2026-07-21 and
+  clause 27's necessary personal noncommercial/internal-use licence. The PDF URL
+  has changed since the M2 record. The rendered [prohibited-country list](https://www.binance.com/en/about-legal/list-of-prohibited-countries)
+  is dated 2026-01-05 and does not name Kosovo.
+- [Bybit API terms](https://www.bybit.com/en/legal/service-specific-terms/API-Terms)
+  remain dated 2026-01-16: sections 1.2/5.1 govern permitted API development/use;
+  section 6 excludes commercial exploitation, resale and provider benchmarking.
+  [Platform terms](https://www.bybit.com/en/legal/terms-of-service/Bybit-BTL-Platform-Terms-and-Conditions)
+  remain effective 2026-09-02; section 15 limits materials to the user's own use
+  without further distribution. Neither its section 11.3 nor the [restricted-country page](https://www.bybit.com/en/help-center/article/Service-Restricted-Countries)
+  (2026-09-01) names Kosovo; their other listed jurisdictions differ. No endpoint
+  substitution or regional bypass is authorized if access is refused.
+- [DeFiLlama terms](https://defillama.com/terms) remain effective 2025-06-24.
+  Sections 1/7 include the official API and personal noncommercial scope;
+  section 8 restricts copying/republication, commercial exploitation and
+  unofficial programmatic access. Use only the already reviewed official free
+  historical-chain endpoint; wider reuse remains outside this interpretation.
+
+Input semantics were rechecked against [Binance klines](https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints),
+[Bybit OI](https://bybit-exchange.github.io/docs/v5/market/open-interest),
+[funding history](https://bybit-exchange.github.io/docs/v5/market/history-fund-rate)
+and the [official DeFiLlama schema](https://github.com/DefiLlama/api-docs/blob/main/defillama-openapi-free.json).
+No provider document establishes predictive effectiveness or guarantees the
+model's history/readiness assumptions. The single batch itself checks current
+metadata/access and measures coverage within unchanged M2 limits.
+
+#### M3 verification and handoff — 2026-09-06
+
+**Passed:** 151 offline M3 assertions, independent feature/score vectors,
+whole-window readiness, irregular funding/TVL, UTC/units/precision, exact replay,
+late-arrival isolation, concurrent duplicates, sealed snapshot children,
+UPDATE/DELETE/TRUNCATE refusal, cross-asset/observation foreign keys, cancelled
+publication, empty/populated-M2 migration paths, disposable down/reapply,
+PostgreSQL recreation and Redis independence. Actual worker SIGTERM interrupts a
+blocked write with exit 130 and no partial persistence. Locked Release builds,
+M1 operational checks, M2 contracts and EF drift checks pass with existing pins.
+
+**Private acceptance passed:** one seven-day acquisition of
+`[2026-08-28T00:00:00Z, 2026-09-04T00:00:00Z)` made 17 attempts total
+(Binance 6, Bybit 9, DeFiLlama 2), within unchanged request/pacing/retry/deadline
+limits. It stored 1,085 observations and 17 payloads with no quarantine: 168
+hourly candles and 168 hourly OI samples per asset, 21 funding settlements per
+asset, and seven TVL observations per applicable chain. All eleven series have
+coverage; no missing hourly anchors were found.
+
+The fixed cutoff was `2026-09-06T14:56:39Z`. As-of times are the 25 UTC hours
+from `2026-09-02T23:00:00Z` through `2026-09-03T23:00:00Z`. The database holds
+25 immutable batches, **75 ready complete scores**, 1,575 feature states and zero
+unusable applicable features. BTC's 175 inapplicable states remain explicit.
+Every repeated scoring command reused its stored batch; read-only replay matched
+exactly before/after database recreation and with Redis stopped. These local
+checks ran only on the internal data network, without provider egress. Observation
+and complete scoring hashes remained unchanged.
+
+| Final evidence | SHA-256 |
+| --- | --- |
+| `.artifacts/analysis-m3-check-e7f907c060de.json` | `64F5F7B9A57B8A1A93B0332480322CCA113DC167C595A9F7552091536EBEE155` |
+| `.artifacts/analysis-m3-private-4e927c141abb.json` | `5A0F856FBA0DA33E0A18FB40AC41F2E2F8F42032D828B3715671138D6F096D0C` |
+| `.artifacts/analysis-m1-check-da2d2d1b05e1.json` | `45F2DFF29FF727C08EEC68B81E89E2966852C2D327779D48958B202B07BCA79A` |
+| `.artifacts/analysis-m2-check-b318d0265f3f.json` | `05264E58DFCDEE0BA459032B71FCDC79A5D00F09E65F68D4663436FB4F15FBA9` |
+
+Frozen canonical manifest hash:
+`acef235e40c75ed4b4aa3f430dda949c9163afdd92aab73c49a7143ee5137eb1`.
+Calculator source hash:
+`d57997b39e15e37a40d79ed52e5fe36dec48b2f08e0506b16988a599a3747656`.
+Private observation hash:
+`5523f31f20aecf4fe2cefe853a1c1e5fb363e9a534cd00eda9911357fe77e05a`.
+Private complete scoring-state hash:
+`9bc95064f51a7c01f0e6d3df456a111384f862f55b137b4bc534130cc986f95f`.
+
+**Resolved intermediate failures:** an added Domain unit check initially referred
+to Infrastructure's catalog; moving the unit map into the manifest restored the
+layer boundary and all builds passed. The first private verifier command used
+fractional-second arguments rejected by the unchanged M2 parser before host
+construction (exit 2). Read-only inspection confirmed zero observations, payloads
+and quarantine rows; no provider batch occurred. Its report/claim and
+`.artifacts/m3-implementation-20260906/preflight-audit.json` are retained.
+After correcting verifier timestamp formatting, the single actual acquisition
+above succeeded. No provider acquisition was retried. An initial audit SQL query
+used an incorrect payload table name; the corrected read-only count query passed.
+**Remaining failed checks: none. Unavailable checks within M3: none.**
+
+**Skipped:** browser suites because all 49 tracked frontend files retain their
+baseline hashes. M1 nevertheless rechecked frontend HTTP loading, proxy and the
+unchanged operational OpenAPI contract. No new generated client is needed.
+Predictive validation, M4/M5, production deployment and commercial reuse are
+outside this task; none is claimed complete.
+
+**Preserved/cleanup:** all 64 protected file hashes match the starting baseline,
+including frontend, adapters, observation semantics, M2 migration, Compose and
+SDK configuration. Existing dependency locks/image pins are unchanged; the new
+package-free check project has its own locked transitive graph. Production API
+and worker run as UID 1654 and contain no fixture directory/check assemblies.
+All task containers/networks and disposable test volumes were removed; existing
+resources were untouched. Private volume
+`analysis-m3-private-4e927c141abb_postgres-data` and ignored matching `.env` remain,
+as does the empty rejected-preflight volume. Keep data/configuration private.
+No deployment, commits or pushes. **M3 complete; stop before M4.**
 
 ### M4 — Rankings API
 
-- `GET /rankings` (name may be version-prefixed) returning persisted rows
-- Problem details for errors
-- Generated frontend client from OpenAPI
-- Generated runtime validation where the selected OpenAPI tooling supports it without hand-duplicating DTOs
-- Contract test that generated artifacts match the spec
+#### Authorized implementation — 2026-09-06
+
+The user approved the M4 plan in this task. Contract: [Rankings API](../../engineering/rankings-api.md).
+Implement persisted batch reads only, exact historical hours, explicit default
+`slice1-v1`, and composite ordering across complete and qualified partial scores.
+No M3 source/manifest changes, migration, retained database access, acquisition,
+recalculation, replay in requests, scheduling, M5 UI, deployment, commits or pushes.
+
+- [x] Add the dedicated Application/Infrastructure read boundary and API contract.
+- [x] Add private local access guard, exact wire formats and generated OpenAPI metadata.
+- [x] Pin Hey API 0.99.0; generate Fetch/types/Zod 4 from the local backend contract.
+- [x] Add feature-owned transport/queryOptions without consumers or Query policy overrides.
+- [x] Verify synthetic isolated API/database/contract tests and M1-M3/frontend regressions.
+- [x] Record evidence, preservation and cleanup; stop before M5.
+
+Existing working-tree M3 changes are the protected implementation baseline,
+recorded in ignored `.artifacts/m4-implementation-20260906/baseline.json`.
+Keep all pre-existing direct dependency/image pins. New transitive generator
+dependencies and the package-free checks project receive exact lockfiles.
+
+- Implemented route: `GET /api/v1/rankings`, with optional `modelId` and exact-hour
+  `asOfUtc`; omission chooses greatest persisted as-of for `slice1-v1` by default.
+- Complete and qualified partial rows share composite-descending/canonical-ID
+  ordering; not-ready rows are retained, null and unranked. No latest-ready fallback.
+- Read-only Repeatable Read binds metadata, scores, categories and feature-state
+  counts to one immutable batch. Requests never touch raw inputs or calculators.
+- Exact six-place decimal strings, explicit score/percent units, UTC millisecond
+  output, stored knowledge cutoff, model hashes and research-reconstruction status.
+- RFC 9457 problems, exact validation before I/O, cancellation, default-deny
+  private-use flag and unchanged loopback/internal network restrictions.
+- Local OpenAPI 3.1 export generates 17 Fetch/types/Zod files. Feature-owned
+  `queryOptions` uses generated request/success/error validation and full-response
+  cache data, with all Query global defaults and no per-query policy overrides.
+- Frontend build checks generated drift; isolated API verification checks actual
+  schema drift. No route/UI, polling, prefetch or M5 behavior is added.
+
+#### M4 verification and handoff — 2026-09-06
+
+**Passed:** 146 package-free mapping/actual-Kestrel/OpenAPI assertions and 39
+isolated PostgreSQL assertions, including 20 database-enforced read-only
+transactions. Checks cover exact/latest selection by as-of rather than creation,
+separately stored model identities, concurrent publication, partial/all-not-ready
+results, rejected corrupt hashes, decimal/UTC/null/applicability semantics,
+request validation before I/O, sanitized problems and cancellation. Complete
+database hashes match before/after successful reads and cancellation; no fact,
+payload or replay-document query occurs. M4 adds no migration/model drift.
+
+The actual local API matches the checked OpenAPI and all 17 generated files.
+Same-origin proxying, strict Host filtering, absent CORS, loopback bindings,
+internal data services, Redis independence and non-root fixture-free images pass.
+Production without the private flag returns 403 for rankings and 404 for OpenAPI.
+The real HTTP cancellation check waits until PostgreSQL is blocked, aborts the
+request, and verifies that its database wait disappears while the test lock is
+still held. Correlated logs report client disconnect 499, with no server error.
+
+**Frontend passed:** locked installation, generated drift check, lint, typecheck,
+42 unit tests (22 rankings transport tests), production compilation and module
+boundary inspection. All 16 production browser checks pass across Chromium,
+Firefox, WebKit and narrow Chromium; the development inspector check also passes.
+The shell makes no financial requests. Generated tests preserve exact string and
+integer types, reject malformed success/problem bodies and non-contract HTTP
+responses, preserve full cache data and verify Fetch signal cancellation.
+
+**M1–M3 regressions passed:** M1's five-service/proxy/health/dependency loss,
+persistence and graceful shutdown checks; all offline M2 adapter/persistence/
+worker checks; and M3's 151 assertions, exact replay, sealed immutability,
+concurrency, migrations, database recreation, Redis independence and blocked
+worker SIGTERM. No private acquisition verifier was run.
+
+**Resolved tooling/verification findings:** ASP.NET web-number metadata initially
+advertised integer strings and the generator mapped `int64` age to coercing
+BigInt. M4-only schema transformers now describe bounded JSON integers; existing
+M1 serialization stays unchanged. The actual exported schema and generated tests
+verify the result. Portable exact-string patterns reject final newlines in both
+.NET and generated Zod validation. Initial TypeScript/lint findings were fixed.
+Node Fetch replaced the test's custom Host header, so the final host probe uses
+raw HTTP. A deliberately terminated test lock session initially caused an
+unhandled promise rejection in the harness; immediate rejection handling now
+preserves cleanup. Its disposable project was explicitly cleaned up. A Production
+helper initially used only the internal data network; the passing probe uses the
+API's application/data network layout with loopback publishing. These were
+resolved findings, not waived checks.
+
+Hey API **0.99.0** is the only new direct dependency. Its new parser subtree
+initially resolved vulnerable `js-yaml` 4.2.0; a scoped override pins the
+maintainer's fixed **4.3.1**. Official release/advisory/override documentation is
+linked in the [contract](../../engineering/rankings-api.md), separately from
+verified compatibility. npm audit reports zero vulnerabilities. All **682**
+pre-existing frontend lock entries and direct pins are unchanged; 28 entries are
+added. Existing NuGet locks and dependency/tool/image pins are unchanged. The new
+package-free rankings check project has a locked transitive graph.
+
+| Final evidence | SHA-256 |
+| --- | --- |
+| `.artifacts/analysis-m4-check-10da03abb135.json` | `1F537971F0A8FC61B2A34C94BF21BD9CD520189985F77FCAF8A7C316706E524A` |
+| `.artifacts/analysis-m1-check-4247fca3b00a.json` | `C03CC06262DAF019B1F41EF34B46AFE9D14A69022C8C1A689D3991A32492A3C9` |
+| `.artifacts/analysis-m2-check-ad44b9f8c3f8.json` | `F23174A2068A8B736FA8A4279D12804B71AA73DAD52E01FDDE5028944C539A79` |
+| `.artifacts/analysis-m3-check-817d71050594.json` | `F6BCF20718632B1DB731CF3EA80D7648B478E1769CA8A23933C023AEB117B30E` |
+| `.artifacts/m4-implementation-20260906/frontend-browser.log` | `93383C71E538970ED81E776B428E888D14454E30502A080B1355B6F7B7589327` |
+| `.artifacts/m4-implementation-20260906/npm-audit.json` | `4DEC1C21B5F58F2B5ABDE8193D925CC907227D11F864102C24CFEABCA6A9A852` |
+| `.artifacts/m4-implementation-20260906/preservation.json` | `C7F47F30FD06C7D3635476A52E0D23EBE54DC3EF4F89C5272CCB36F222E94A6A` |
+| `.artifacts/m4-implementation-20260906/lock-preservation.json` | `8EC3E83010454EA18A1B82572883EAA4004B000AEC43ED688C0DFDC6A4C9AEAA` |
+
+**Preserved/cleanup:** 139 pre-existing files outside the 17 authorized integration/
+documentation changes match their starting hashes. This includes M3 calculators,
+manifest/source hashes recorded above, scoring orchestration/store, worker,
+all migration/model mappings, adapters/observation semantics, and pre-existing
+frontend source/tests (including application ownership and Query defaults).
+No retained database was connected to or mounted; retained M1/M2/M3 volumes still
+exist. All M4 verification containers/networks/disposable volumes, including the
+interrupted run's resources, are removed. M1/M2/M3 regression projects also cleaned
+up only their own resources. Test images and ignored evidence remain local.
+
+**Remaining failed checks: none. Unavailable required checks: none.** Host .NET
+is absent; builds/checks used the pinned SDK container. The pre-existing Router
+CLI circular-import warning remains; all affected checks pass. Retained private
+data, live acquisition, predictive effectiveness, M5, deployment, commercial
+sharing, commits and pushes are outside this task. No contract question remains.
+**M4 complete; stop before M5.**
 
 ### M5 — Ranking dashboard
 
@@ -689,31 +958,36 @@ acceptance gate.** M3–M5 and the overall vertical slice remain incomplete.
 
 - [x] A clean `docker compose up --build` starts frontend, API, worker, PostgreSQL, and Redis, and the repository README documents the command
 - [x] UTC timestamps in API JSON (M1 operational responses verified; future financial endpoints require their own checks)
-- [ ] API precision and unit conventions are documented; exact values use a round-trip-safe wire representation
-- [x] Worker logs correlation of run id (M1 lifecycle; future job runs require their own checks)
-- [ ] Three assets appear even if one category is inapplicable
-- [ ] Historical score rows retain immutable model and exact feature-input lineage; later runs do not replace prior as-of snapshots
+- [x] API precision and unit conventions are documented; exact values use a round-trip-safe wire representation
+- [x] Worker logs correlation of run id (M1 lifecycle and M2/M3 one-shots verified)
+- [x] Rankings API returns three assets even if one category is inapplicable (dashboard remains M5)
+- [x] Historical score rows retain immutable model and exact feature-input lineage; later runs do not replace prior as-of snapshots
 - [ ] Tests from [../../engineering/testing-strategy.md](../../engineering/testing-strategy.md) that apply to M1–M5 pass
 
 ## Risks
 
 | Risk | Mitigation |
 | --- | --- |
-| Provider docs do not support the hoped-for 15–25 features | Cut features; do not fake them |
+| Required history does not support the frozen M3 features | Retain missing-state evidence and report the gate incomplete; do not shrink the catalog or relax thresholds to pass |
 | Symbol/perp confusion across BTC/ETH/SOL | Instrument map tests before scoring |
 | Funding unit mismatch | Contract tests against vendor documentation |
 | Scope creep into scanner/alerts/charts | Reject in review unless this plan is revised |
 | Next.js or extra services added by habit | Follow [ARCHITECTURE.md](../../../ARCHITECTURE.md) |
 
-## Unresolved (must be decided during M1–M2, then recorded)
+## Decisions and remaining unresolved items
 
 - Concrete providers and private-use scope — resolved for M2 above; wider commercial redistribution remains unresolved until sharing/monetization is authorized.
-- Exact feature list after doc validation
-- Manifest weights
+- Exact feature list and manifest weights — resolved by the approved M3 manifest; predictive effectiveness remains unvalidated.
 - Canonical candle interval — M2 resolves spot candles to 1h UTC; OI samples to 1h. Funding/TVL keep provider event timestamps without an invented accrual/daily-close convention.
 - .NET / Node LTS versions — resolved in M1 above
 - Charting library (can remain unused in M5)
 
 ## Recommended next Codex task
 
-The M2 private-use acceptance gate passed on 2026-09-06. The exact next milestone is **M3 — Features and scores**: first finalize the documented 15–25 feature definitions and immutable scoring manifest, then implement deterministic feature/scoring jobs, append-only persistence with exact input lineage and golden-vector tests. Keep the existing private-use provider boundaries and revalidate any additional history or series before depending on it. M3 requires its own bounded implementation task; it has not started. Commercial redistribution review belongs before sharing/monetization, not as a blocker to this user's private M3 work. Do not treat M3–M5 or the overall vertical slice as complete.
+The exact next milestone is **M5 — Ranking dashboard**, after separate user
+authorization. Consume M4's generated contract and feature-owned queryOptions;
+preserve Query global defaults, frontend ownership and stored model/as-of/quality/
+applicability semantics. No request-time scoring or extra acquisition is implied.
+Preserve the private single-user boundary; wider rights review belongs before
+sharing or monetization. M5, predictive validation and the overall vertical slice
+remain incomplete. This M4 task stops here.

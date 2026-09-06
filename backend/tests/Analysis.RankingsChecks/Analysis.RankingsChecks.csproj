@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="../../src/Analysis.Api/Analysis.Api.csproj" />
+    <Compile Include="../Analysis.ScoringChecks/Synthetic.cs" Link="Synthetic.cs" />
+  </ItemGroup>
+</Project>

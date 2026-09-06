@@ -1,0 +1,57 @@
+{
+  "modelId": "slice1-v1",
+  "featureVersion": "slice1-features-v1",
+  "scorerVersion": "slice1-scorer-v1",
+  "status": "provisional-heuristic",
+  "recordKind": "research-reconstruction",
+  "universe": ["bitcoin", "ethereum", "solana"],
+  "baseUnits": {"bitcoin":"BTC", "ethereum":"ETH", "solana":"SOL"},
+  "numeric": {"version": "decimal18-v1", "places": 18, "scorePlaces": 6, "midpoint": "ToEven", "weightDenominator": 60000},
+  "history": {"corePriceHours": 72, "fundingGapHours": 12, "tvlGapHours": 36, "minimumQuality": 50},
+  "policies": {
+    "time": "Hourly UTC as-of T; candle end <= T; scalar event <= T; ingested-at <= explicit K. Ranges and missing evidence are frozen.",
+    "funding": "Sum actual events in (start,end]; predecessor at/before start within 12h; no consecutive gap >12h; last event within 12h of end. Never infer accrual or historic settlement schedule.",
+    "tvl": "Latest event <= each target, age <=36h; distinct change anchors and no intervening gap >36h. Preserve actual endpoint times and duration.",
+    "missing": "No interpolation or shortened means. Inapplicable omitted; missing/stale/invalid/conflicted unavailable. Complete 73-bar own price history and quality >=50 required for composite/confidences.",
+    "direction": "Positive funding is contrarian crowding pressure. Positive OI growth confirms price direction; contraction is neutral. TVL growth is ecosystem evidence, not token value capture.",
+    "numeric": "Checked decimal arithmetic; divisions/features/normalizations round to 18 places ToEven, final scores to 6; ordered reductions. sqrt via exact scaled-integer rounding. Rational integer leaf weights avoid repeating-decimal weight drift.",
+    "quality": "Directional available weight / applicable weight; independent context coverage. Single-source provider agreement unassessed. Freshness policies are heuristics, not provider SLAs.",
+    "scores": "Signed category/composite [-100,100]; bullish and bearish confidence [0,100] from positive/negative evidence mass separately, never complements or probabilities.",
+    "versioning": "Immutable manifest and calculator source hash; different behavior requires a new model/calculation version. No same-version same-as-of refresh."
+  },
+  "features": [
+    {"id":1,"key":"spot.close","operation":"close","hours":0,"unit":"USDT","applicability":"all","normalization":"context"},
+    {"id":2,"key":"spot.quote-volume.24h","operation":"quote-volume","hours":24,"unit":"USDT","applicability":"all","normalization":"context"},
+    {"id":3,"key":"spot.quote-volume-change.24h","operation":"quote-volume-change","hours":24,"unit":"fraction","applicability":"all","normalization":"context"},
+    {"id":4,"key":"spot.return.4h","operation":"return","hours":4,"unit":"fraction","applicability":"all","normalization":"clip","threshold":0.02},
+    {"id":5,"key":"spot.return.24h","operation":"return","hours":24,"unit":"fraction","applicability":"all","normalization":"clip","threshold":0.05},
+    {"id":6,"key":"spot.return.72h","operation":"return","hours":72,"unit":"fraction","applicability":"all","normalization":"clip","threshold":0.10},
+    {"id":7,"key":"spot.realized-volatility.24h","operation":"realized-volatility","hours":24,"unit":"fraction","applicability":"all","normalization":"context"},
+    {"id":8,"key":"spot.relative-strength-btc.24h","operation":"relative-strength","hours":24,"unit":"fraction","applicability":"alts","normalization":"clip","threshold":0.05},
+    {"id":9,"key":"spot.relative-strength-btc.72h","operation":"relative-strength","hours":72,"unit":"fraction","applicability":"alts","normalization":"clip","threshold":0.10},
+    {"id":10,"key":"spot.sma-distance.24h","operation":"moving-average-distance","hours":24,"unit":"fraction","applicability":"all","normalization":"clip","threshold":0.03},
+    {"id":11,"key":"regime.btc-return.24h","operation":"btc-return","hours":24,"unit":"fraction","applicability":"alts","normalization":"clip","threshold":0.05},
+    {"id":12,"key":"regime.btc-return.72h","operation":"btc-return","hours":72,"unit":"fraction","applicability":"alts","normalization":"clip","threshold":0.10},
+    {"id":13,"key":"funding.last-settlement","operation":"funding-last","hours":0,"unit":"fraction","applicability":"all","normalization":"context"},
+    {"id":14,"key":"funding.settled-sum.24h","operation":"funding-sum","hours":24,"unit":"fraction","applicability":"all","normalization":"negative-clip","threshold":0.003},
+    {"id":15,"key":"funding.settled-sum-change.24h","operation":"funding-change","hours":24,"unit":"fraction","applicability":"all","normalization":"negative-clip","threshold":0.003},
+    {"id":16,"key":"oi.both-sides","operation":"oi","hours":0,"unit":"base-asset","applicability":"all","normalization":"context"},
+    {"id":17,"key":"oi.change.4h","operation":"oi-change","hours":4,"unit":"fraction","applicability":"all","normalization":"oi-confirmation","threshold":0.05,"confirmationFeatureId":4},
+    {"id":18,"key":"oi.change.24h","operation":"oi-change","hours":24,"unit":"fraction","applicability":"all","normalization":"oi-confirmation","threshold":0.10,"confirmationFeatureId":5},
+    {"id":19,"key":"chain.tvl","operation":"tvl","hours":0,"unit":"USD","applicability":"alts","normalization":"context"},
+    {"id":20,"key":"chain.tvl-change.24h","operation":"tvl-change","hours":24,"unit":"fraction","applicability":"alts","normalization":"clip","threshold":0.05},
+    {"id":21,"key":"chain.tvl-change.72h","operation":"tvl-change","hours":72,"unit":"fraction","applicability":"alts","normalization":"clip","threshold":0.10}
+  ],
+  "profiles": {
+    "bitcoin": [
+      {"category":"price","weight":0.5,"groups":[{"weight":0.95,"featureIds":[4,5,6]},{"weight":0.05,"featureIds":[10]}]},
+      {"category":"derivatives","weight":0.5,"groups":[{"weight":0.5,"featureIds":[14,15]},{"weight":0.5,"featureIds":[17,18]}]}
+    ],
+    "alts": [
+      {"category":"price","weight":0.3,"groups":[{"weight":0.475,"featureIds":[4,5,6]},{"weight":0.475,"featureIds":[8,9]},{"weight":0.05,"featureIds":[10]}]},
+      {"category":"derivatives","weight":0.3,"groups":[{"weight":0.5,"featureIds":[14,15]},{"weight":0.5,"featureIds":[17,18]}]},
+      {"category":"fundamentals","weight":0.3,"groups":[{"weight":1,"featureIds":[20,21]}]},
+      {"category":"regime","weight":0.1,"groups":[{"weight":1,"featureIds":[11,12]}]}
+    ]
+  }
+}

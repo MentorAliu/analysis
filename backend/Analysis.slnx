@@ -9,5 +9,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/Analysis.CatalogChecks/Analysis.CatalogChecks.csproj" />
     <Project Path="tests/Analysis.OperationalChecks/Analysis.OperationalChecks.csproj" />
+    <Project Path="tests/Analysis.ScoringChecks/Analysis.ScoringChecks.csproj" />
+    <Project Path="tests/Analysis.RankingsChecks/Analysis.RankingsChecks.csproj" />
   </Folder>
 </Solution>

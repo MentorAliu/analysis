@@ -12,7 +12,7 @@ High-level system shape for the crypto intelligence platform. Product intent liv
 | Backend shape | Proposed | ASP.NET Core modular monolith: API host + worker host |
 | Frontend shape | Proposed | React + TypeScript SPA on Vite |
 | Frontend data/routing | Proposed | TanStack Router, TanStack Query, Zod, shadcn/ui |
-| API contract | Proposed | REST + OpenAPI; generated frontend client/types |
+| API contract | Requirement; M4 implemented | REST + OpenAPI; generated frontend client/types/runtime validation |
 | Persistence | Proposed | PostgreSQL authoritative; Redis disposable cache/coordination |
 | Local runtime | Proposed | Docker Compose on Docker Desktop |
 | Realtime transport | Future | Polling first; SSE/WebSockets only if latency needs justify it |
@@ -110,6 +110,18 @@ The frontend is a client of the API, not a second domain layer. It may reshape v
 
 The API is not a pass-through to provider APIs. Callers receive normalized, scored, persisted intelligence.
 
+**Implemented M4:** `GET /api/v1/rankings` reads one stored batch through
+Application's `IRankingsReader` and Infrastructure's untracked, read-only
+Repeatable Read projection. Selection is greatest as-of for an explicit model
+(default `slice1-v1`) or an exact historical UTC hour. It reads no observations,
+payloads or replay inputs and invokes no calculator/provider. Partial results
+rank alongside complete results; not-ready rows remain present and unranked.
+Exact decimal strings, units, knowledge cutoff, model identity and quality fields
+are defined in [the M4 contract](docs/engineering/rankings-api.md). The private-use
+flag defaults false and local Compose enables it behind loopback/same-origin
+boundaries. OpenAPI, errors, cancellation and generated validators are verified.
+This path uses no Redis cache and introduces no migration or scoring write.
+
 ## Persistence and cache
 
 | Store | Role |
@@ -131,6 +143,15 @@ remains an operational heartbeat. The private Compose override adds egress only
 for explicit runs; PostgreSQL/Redis stay internal. Both one-shot and hosted paths
 honor cancellation and log correlation. See the active plan for the private-use
 source review and README for reproducible commands.
+
+**Implemented M3:** `--score-once` and read-only `--replay-scores` add deterministic
+Domain calculators and Application read/store ports. Infrastructure captures
+canonical observations in read-only Repeatable Read and atomically publishes
+immutable model/input/feature/score bundles using PostgreSQL advisory locks.
+EF owns the additive migration and immutability triggers. Scoring constructs no
+provider clients; Redis is unnecessary for correctness/replay. Exact numerical
+rules and lineage are documented beside the [versioned manifest](backend/src/Analysis.Domain/Scoring/Manifests/README.md).
+M3 itself added no financial HTTP endpoint; M4's separate read boundary is above.
 
 **Proposed:** a dedicated worker host in the same modular monolith, sharing domain modules with the API.
 
@@ -210,9 +231,12 @@ build rejects emitted devtools, tests and CLI modules. Table's inspector is defe
 until its required unified shell meets the stable-only policy.
 
 Zod validates public configuration. Direct Zod 4 Standard Schema URL validation
-and loader/Query cache sharing are verified on a test-only memory route. Generated
-API client/types and transport validation remain M4; no parallel transport model
-is introduced. Rankings filters, asset/time-range pages, product polling and
+and loader/Query cache sharing are verified on a test-only memory route. M4 uses
+Hey API 0.99.0 to generate the Fetch client, types and Zod 4 validators into
+`src/lib/api/generated` from `contracts/openapi/v1.json`. `features/rankings` owns
+transport validation/error handling and reusable `queryOptions`; no consumer or
+Query policy override is added. No parallel transport model is introduced.
+Rankings filters, asset/time-range pages, product polling and
 financial charts are future work (charting library remains **Unresolved**).
 
 Follow current official documentation listed in [AGENTS.md](AGENTS.md). Prefer each library’s recommended patterns over ad-hoc alternatives.

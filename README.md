@@ -6,8 +6,11 @@ Compose. M2 adds a catalog, normalized observations, EF migrations and tested
 provider adapters. **Private-use ingestion from Kosovo is verified** through an
 explicit one-shot command; normal startup does not fetch provider data. Commercial
 sharing and redistribution remain outside the reviewed scope.
-This is an analytics and research product. No features, scores, rankings, trading
-or custody flows are implemented. M3 has not started.
+M3 adds deterministic features and versioned heuristic scores with immutable
+input lineage and local replay. Private acceptance results are recorded in the
+active plan. M4 adds a private read-only rankings API and generated, validated
+frontend transport. The dashboard and predictive validation remain future work.
+This is an analytics and research product; trading and custody are excluded.
 
 ## Prerequisites and version pins
 
@@ -197,7 +200,7 @@ The reusable `DataTable` takes stable typed columns/data, a canonical `getRowId`
 caption, optional empty state and controlled `sorting`/`onSortingChange` props.
 There is no public table page or financial demo. Query/Router devtools load only
 in development; Table's inspector remains deferred because its unified shell is
-alpha. API client generation and transport validation remain M4.
+alpha. M4's generated API transport has no dashboard consumer yet.
 
 Use the [pinned official shadcn skill and project conventions](AGENTS.md#frontend-component-workflow).
 With the pinned toolchain, inspect context/docs before component changes:
@@ -230,8 +233,8 @@ The host Vite proxy defaults to `http://127.0.0.1:5080`; Compose sets
 `API_PROXY_TARGET=http://api:8080`. If needed, copy `frontend/.env.example` to
 `frontend/.env.local` and set the target. `VITE_` values are public browser build
 inputs, never secrets. Zod validates the public application name. TanStack Query
-is configured without product requests, polling, or a hand-written transport DTO
-layer; generation from the backend contract belongs to M4.
+keeps all global defaults and has no product requests or polling in the shell.
+M4's feature-owned query factory uses the generated backend contract.
 
 Backend dependency direction is API/Worker → Infrastructure → Application →
 Domain. Domain contains canonical identities, observations and numeric/time rules;
@@ -259,7 +262,8 @@ scale rounding. Timestamps are UTC with millisecond precision. Funding is a
 fraction, OI is both sides in the base asset, and USDT is never labelled USD.
 Gaps stay missing. Identical observations are no-ops; conflicting records are quarantined
 without changing original observations. Quarantine contains safe error codes and
-window/identity metadata, not raw provider error messages. No scoring schema exists.
+window/identity metadata, not raw provider error messages. M3 adds separate scoring
+tables without changing these M2 facts or their migration.
 Responses whose server timestamps/metadata change may add new provenance payloads
 on a second run; original observations and their exact lineage remain unchanged.
 
@@ -351,6 +355,61 @@ The design-time factory needs no database connection or credentials for generati
 Generated migrations under Infrastructure are the sole schema authority; never
 add a competing init-SQL or `EnsureCreated` path. Review generated SQL before use.
 
+## M3 deterministic features and scores
+
+The [immutable manifest and numeric contract](backend/src/Analysis.Domain/Scoring/Manifests/README.md)
+define the provisional BTC/ETH/SOL model. PostgreSQL retains every feature state,
+observation/payload lineage, model/source hash and exact replay input. These are
+historical research reconstructions, not calibrated probabilities or signals
+published at the historical as-of time. There is no financial API or dashboard.
+
+After reviewing/applying migrations, score stored data with explicit whole-second
+UTC timestamps. A different cutoff for an existing asset/as-of/model conflicts.
+
+```powershell
+docker compose -p analysis-local run --rm --no-deps worker --score-once --private-use --country XK --as-of-utc 2026-09-03T23:00:00Z --knowledge-cutoff-utc 2026-09-06T15:00:00Z --model slice1-v1
+docker compose -p analysis-local run --rm --no-deps worker --replay-scores --model slice1-v1 --start-utc 2026-09-02T23:00:00Z --end-utc 2026-09-04T00:00:00Z
+```
+
+The example requires corresponding local history and an actual past cutoff
+appropriate to that database. It does not acquire data. Scoring creates no
+provider clients and needs only PostgreSQL on the base internal Compose network.
+All three assets publish atomically. Replay reads frozen snapshots over at most
+seven days, verifies original facts/hashes and exact calculations, and reports
+absent periods. Exit codes: 0 computed/replayed, 2 invalid request/precondition,
+3 any not-ready asset or empty replay range, 1 failure/mismatch, 130 cancellation.
+Partial ready scores remain explicitly partial. Default startup stays heartbeat-only.
+
+Run offline verification with pinned Node and Docker:
+
+```powershell
+node scripts/verify-m3.mjs
+```
+
+The `m3checks` image contains package-free synthetic checks. The verifier tests
+empty/populated-M2 migration paths, replay, concurrent publication, immutable
+lineage, cancellation, Redis independence and PostgreSQL recreation, then removes
+only its disposable resources. Migration `20260906143029_M3FeaturesScores` leaves
+M2 tables/data unchanged. Down migrations are for disposable tests; retained
+history uses backup restoration or forward repair. Do not disable snapshot guards.
+
+Private acceptance requires explicit authorization and a fresh official terms/
+access review. This opt-in command is separate from builds and offline checks;
+supply the timestamp of the actual review:
+
+```powershell
+node scripts/verify-m3-private.mjs --private-use --country XK --terms-reviewed-utc <reviewed-UTC-timestamp>
+```
+
+It freezes seven days ending at UTC midnight two days before execution and acquires
+once under existing M2 limits. Ignored `.artifacts/m3-private-acquisition.json`
+prevents automatic repetition. It scores 25 hours, locally reruns/replays and
+recreates PostgreSQL. Scoring runs on the internal-only network with no provider
+egress. Missing history remains an incomplete gate; no shorter windows or
+substituted inputs. Reports/configuration stay ignored; task containers/networks
+stop and the private volume stays. Do not run M2's private verifier as part of M3:
+that would acquire another batch. Actual completion evidence is in the active plan.
+
 ## Health and logs
 
 | Condition | API/worker liveness | API/worker readiness |
@@ -376,6 +435,56 @@ Backend logs are JSON with UTC timestamps, request trace/correlation scopes, and
 worker lifecycle run IDs. `X-Correlation-ID` accepts 1–64 ASCII letters, digits,
 periods, underscores or hyphens; invalid values are replaced. Errors expose
 sanitized problem details and correlation, without database/provider exceptions.
+
+## M4 private rankings API
+
+`GET /api/v1/rankings` reads one persisted batch. Optional `modelId` defaults to
+`slice1-v1`. Optional `asOfUtc=YYYY-MM-DDTHH:00:00Z` requires that exact stored UTC
+hour; omission selects the greatest stored as-of for the model. Missing models or
+batches return 404, an unmigrated schema returns 503, and invalid/duplicate/unknown
+parameters return 400. Startup and requests do not acquire or recalculate data.
+
+The [contract](docs/engineering/rankings-api.md) defines exact six-place decimal
+strings, UTC timestamps, knowledge cutoff, model hashes, units, quality and
+partial/not-ready/inapplicable behavior. Responses include all three canonical
+assets and use `Cache-Control: no-store`. Historical scores remain explicitly
+labelled research reconstructions, not contemporaneously issued signals.
+
+`Rankings:PrivateUseEnabled` defaults false. Local Compose explicitly enables it;
+API/frontend ports remain loopback, proxies same-origin and PostgreSQL internal.
+The flag does not authenticate users or grant redistribution rights. Do not expose
+this stack publicly. Production hides OpenAPI and denies rankings unless private
+configuration explicitly enables them (the local Compose production override
+still inherits the local flag).
+
+With pinned Node 24.20.0 and Docker, run isolated synthetic verification:
+
+```powershell
+node scripts/verify-m4.mjs
+```
+
+It owns and cleans up its disposable database, checks actual API/proxy/private
+boundaries and cancellation, and writes a sanitized `.artifacts/` report. It never
+uses retained private databases or runs provider acquisition.
+
+Backend OpenAPI is the transport authority. To export the actual Development
+contract without connecting to a database, use the synthetic Kestrel checks:
+
+```powershell
+$rankingsSdk = 'mcr.microsoft.com/dotnet/sdk:10.0.400-noble@sha256:e1ffd2a92ae84c1291bc1b6887501f8af98e6331e7af6d4c8d37168c5e87a64c'
+docker run --rm --mount "type=bind,source=$PWD,target=/src" --workdir /src $rankingsSdk dotnet run --project backend/tests/Analysis.RankingsChecks --configuration Release -p:RestoreLockedMode=true -- --export /src/contracts/openapi/v1.json /src/frontend/tests/unit/features/rankings/fixtures/rankings.json
+npm --prefix frontend run api:normalize
+npm --prefix frontend run api:generate
+npm --prefix frontend run api:check
+```
+
+Review the backend schema and generated diff together. Hey API 0.99.0 generates
+Fetch/types/Zod 4; no handwritten transport DTOs or duplicate validators. The
+frontend build checks generation drift; the M4 verifier also compares the running
+API's schema. `src/features/rankings` owns transport/queryOptions and passes Query
+cancellation into Fetch. No Query policy overrides, route, dashboard or polling
+are introduced. Existing dependency/image pins are retained; the new generator
+subtree's security override is documented in the contract.
 
 ## Production image check and shutdown
 
@@ -421,5 +530,8 @@ The Router CLI currently emits a dependency circular-import warning mentioning
 pass; the warning is recorded in the plan. No runtime adoption beyond the M1
 shell is implied. M2 private-use access, coverage, precision, lineage and repeat
 ingestion passed on 2026-09-06; this bounded sample is not a history/SLA guarantee
-or permission for commercial redistribution. Rankings contracts, feature formulas,
-scoring and frontend data integration belong to M3–M5. **Next: M3 — Features and scores.**
+or permission for commercial redistribution. M3 feature/scoring, immutable
+persistence and the seven-day private acceptance also passed; the model remains
+an unvalidated heuristic. M4's persisted rankings contract and generated frontend
+transport are implemented. **Next: M5 — Ranking dashboard**, after separate
+authorization; the overall vertical slice remains incomplete.

@@ -4,6 +4,16 @@
 
 How observations become persisted intelligence. Domain types: [domain-model.md](domain-model.md). Scoring: [scoring-model.md](scoring-model.md). Provider capabilities: [../engineering/data-sources.md](../engineering/data-sources.md).
 
+**Implemented M3 subset:** explicit worker score/replay commands read M2 facts
+without provider clients. Capture uses read-only Repeatable Read at explicit event
+time T and knowledge cutoff K. Pure calculations consume frozen inputs; a separate
+advisory-locked transaction publishes the fixed universe atomically. Unique
+asset/as-of/model identity and immutable snapshots prevent late-arrival refresh.
+Changed cutoffs conflict; duplicates reuse the winning stored bundle. Replay
+verifies hashes/source lineage and reports absent periods without writes. These
+are research reconstructions, not original forward signals. [Concrete contract](../../backend/src/Analysis.Domain/Scoring/Manifests/README.md).
+Scheduling, scanning, signal detection and outcomes in the diagram remain future.
+
 ## Pipeline stages
 
 ```mermaid

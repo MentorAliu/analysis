@@ -8,7 +8,7 @@ import router from '@tanstack/eslint-plugin-router'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist', 'src/routeTree.gen.ts', '.vitest', 'coverage', 'playwright-report', 'test-results', '.playwright-browsers']),
+  globalIgnores(['dist', 'src/routeTree.gen.ts', 'src/lib/api/generated', '.vitest', 'coverage', 'playwright-report', 'test-results', '.playwright-browsers']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [js.configs.recommended, tseslint.configs.recommended, query.configs['flat/recommended-strict'], router.configs['flat/recommended']],

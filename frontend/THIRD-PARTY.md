@@ -9,3 +9,11 @@ Manual setup follows https://ui.shadcn.com/docs/installation/manual and the Vite
 guide. Only the required Card primitive, class helpers and theme tokens are
 included. The shadcn CLI is not a runtime dependency. The vendored source itself
 is the reproducibility pin; future registry changes are explicit source updates.
+
+`src/lib/api/generated/` is generated from the local backend OpenAPI document by
+`@hey-api/openapi-ts` **0.99.0** with its bundled Fetch client, TypeScript, SDK and
+Zod 4 plugins. The generator's MIT license is retained in `HEY-API-LICENSE.md`;
+source: https://github.com/hey-api/hey-api/tree/@hey-api/openapi-ts@0.99.0.
+Regenerate with `npm run api:generate`; never edit generated files by hand.
+The scoped `js-yaml` 4.3.1 security override and its official maintainer evidence
+are documented in [the M4 contract](../docs/engineering/rankings-api.md).

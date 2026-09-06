@@ -9,6 +9,9 @@
     "npm": "11.19.0"
   },
   "scripts": {
+    "api:generate": "node scripts/api-contract.mjs generate",
+    "api:check": "node scripts/api-contract.mjs check",
+    "api:normalize": "node scripts/api-contract.mjs normalize",
     "dev": "vite --host 0.0.0.0",
     "ui": "shadcn",
     "routes": "tsr generate",
@@ -23,6 +26,9 @@
     "test:e2e:dev": "playwright test --config playwright.dev.config.ts",
     "test:e2e:install": "playwright install chromium firefox webkit",
     "test:e2e:report": "playwright show-report"
+  },
+  "overrides": {
+    "@hey-api/json-schema-ref-parser": { "js-yaml": "4.3.1" }
   },
   "dependencies": {
     "@tanstack/react-query": "5.102.8",
@@ -39,6 +45,7 @@
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
+    "@hey-api/openapi-ts": "0.99.0",
     "@playwright/test": "1.63.0",
     "@tailwindcss/vite": "4.3.3",
     "@tanstack/eslint-plugin-query": "5.102.8",

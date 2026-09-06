@@ -24,6 +24,7 @@ services:
       target: api
     environment:
       ASPNETCORE_ENVIRONMENT: Development
+      Rankings__PrivateUseEnabled: "true"
       Postgres__Password: ${POSTGRES_PASSWORD:?Run node scripts/init-local.mjs first}
     ports:
       - "127.0.0.1:${API_PORT:-5080}:8080"
