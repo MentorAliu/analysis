@@ -1,0 +1,94 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      target: development
+    environment:
+      API_PROXY_TARGET: http://api:8080
+    ports:
+      - "127.0.0.1:${FRONTEND_PORT:-5173}:5173"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks: [application]
+    init: true
+    stop_grace_period: 15s
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      Postgres__Password: ${POSTGRES_PASSWORD:?Run node scripts/init-local.mjs first}
+    ports:
+      - "127.0.0.1:${API_PORT:-5080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks: [application, data]
+    stop_grace_period: 15s
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+
+  worker:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: worker
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      Postgres__Password: ${POSTGRES_PASSWORD:?Run node scripts/init-local.mjs first}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks: [data]
+    stop_grace_period: 15s
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+
+  postgres:
+    image: postgres:18.6-bookworm@sha256:1c59e2c3c818eaa0f0628f695b36e7c9e362d6b219b36a54a32df645cbd7e1af
+    environment:
+      POSTGRES_USER: analysis
+      POSTGRES_DB: analysis
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run node scripts/init-local.mjs first}
+      TZ: UTC
+      PGTZ: UTC
+    command: [postgres, -c, timezone=UTC, -c, log_timezone=UTC]
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 3s
+      timeout: 3s
+      retries: 10
+      start_period: 15s
+    networks: [data]
+    stop_grace_period: 30s
+
+  redis:
+    image: redis:8.10.1-alpine@sha256:becdda6c7f4b3fb42e42fd7f120bbf5c54c4caaaf16f26da24e4563d2c1f0576
+    command: [redis-server, --save, "", --appendonly, "no"]
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+    networks: [data]
+
+networks:
+  application:
+  data:
+    internal: true
+
+volumes:
+  postgres-data:

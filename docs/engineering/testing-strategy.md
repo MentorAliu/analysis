@@ -73,6 +73,18 @@ Schema migrations apply on empty and on a representative snapshot; rollback stor
 
 Follow current official React, Vite, TanStack Router, TanStack Query, Zod, and shadcn/ui testing guidance.
 
+**Implemented (2026-09-06):** Vitest 5.0.0 with React Testing Library 16.3.3,
+DOM Testing Library 10.4.1, jest-dom 7.0.1 and jsdom 30.0.1 tests public
+configuration and the shell with isolated memory histories. Playwright 1.63.0
+tests the production bundle in Chromium, Firefox, WebKit and a narrow Chromium
+viewport, including navigation/history, reload, missing routes and keyboard
+skip-link focus. Fail on runtime errors or external/API requests; the shell has
+no financial API contract to mock. Exact compatibility, image pins and verification
+are recorded in the active execution plan; commands are in the root README.
+
+The following data-driven checks become applicable in M4/M5 using the generated
+OpenAPI client; do not create parallel transport models ahead of that contract:
+
 - Router search params round-trip rankings filters
 - Query polling/error states
 - Components do not invent scores; they render API data
@@ -120,6 +132,7 @@ Do not skip scoring goldens because a UI screenshot “looks ranked”.
 
 ## Unresolved
 
-- Exact JS/TS test runner and .NET test stack versions (choose from official current docs).
+- Whether to adopt a .NET test framework later: current backend checks are package-free
+  executable projects under the pinned .NET SDK, with isolated M1/M2 integration verifiers.
 - Coverage gates, if any.
 - How production-like the first CI runners are (Docker-in-Docker vs hosted testcontainers).

@@ -1,0 +1,17 @@
+.git
+.env
+.env.*
+**/.env
+**/.env.*
+.artifacts
+**/node_modules
+**/dist
+**/bin
+**/obj
+**/*.tsbuildinfo
+docs
+**/.vitest
+**/coverage
+**/playwright-report
+**/test-results
+**/.playwright-browsers

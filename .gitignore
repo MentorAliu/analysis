@@ -1,0 +1,17 @@
+**/node_modules/
+**/dist/
+**/bin/
+**/obj/
+**/*.tsbuildinfo
+.env
+.env.*
+!.env.example
+**/.env.local
+.artifacts/
+.vs/
+*.user
+**/.vitest/
+**/coverage/
+**/playwright-report/
+**/test-results/
+**/.playwright-browsers/

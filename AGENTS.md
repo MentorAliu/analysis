@@ -24,9 +24,9 @@ Read the relevant document before changing a subsystem. Do not copy detailed arc
 
 Status labels used across docs: **Requirement**, **Proposed**, **Unresolved**, **Future**.
 
-## Proposed repository map
+## Repository map
 
-Not yet scaffolded. When implementation starts, keep this layout unless a later exec plan changes it:
+M1 is scaffolded. Keep this layout unless a later exec plan changes it:
 
 - `frontend/` — React + TypeScript + Vite SPA
 - `backend/` — ASP.NET Core modular monolith (API host + worker host)

@@ -1,6 +1,6 @@
 # Data sources
 
-**Status:** Requirements for capabilities. Vendor selection is unresolved.
+**Status:** Requirements for capabilities. Product/live vendor approval is unresolved. M2's offline technical candidates and licensing/access blockers are recorded in the [active plan](../exec-plans/active/first-ranking-vertical-slice.md#m2--catalog-and-adapter).
 
 Do not treat names mentioned in conversation or common industry lists as selected vendors. Do not invent API endpoints, history depth, or rate limits. Confirm capabilities against the provider’s official documentation during evaluation.
 

@@ -16,7 +16,7 @@ Priorities follow the [feature research](../research/feature-research-2026-09-05
 
 | Order | Roadmap item | Status | Exit or promotion gate |
 | --- | --- | --- | --- |
-| 0 | BTC/ETH/SOL technical ranking slice | Requirement; implementation not started | Complete M1–M5 and the active plan's acceptance checks. |
+| 0 | BTC/ETH/SOL technical ranking slice | Requirement; M1 complete; M2 offline scope verified, live use blocked; M3–M5 not started | Complete M1–M5 and the active plan's acceptance checks. |
 | 1A | Forward signal recording and outcome collection | Proposed; first work after the slice | Reproducible original records, predefined outcome conventions and benchmarks, and passing integrity checks. |
 | 1B | Asset detail with precise change explanations | Requirement for the planned explanation workflow; after the slice | Correctly distinguish asset, peer/universe, model and data-quality changes. |
 | 2 | Saved research thesis monitor | Proposed; first customer-facing paid-workflow experiment | Correct reviews, useful repeat usage and evidence of paid renewal under a predefined pilot protocol. |

@@ -1,0 +1,11 @@
+# Local verification of production image targets; this is not a deployment recipe.
+services:
+  frontend:
+    build:
+      target: production
+  api:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+  worker:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
