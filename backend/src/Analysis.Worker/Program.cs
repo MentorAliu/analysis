@@ -6,14 +6,16 @@ using Microsoft.EntityFrameworkCore;
 if (args.FirstOrDefault() == "--healthcheck")
     return await Operations.RunProbeAsync(args);
 
-if (args.FirstOrDefault() == "--ingest-once")
+PrivateIngestionRequest? ingestion = null;
+var ingestOnce = args.FirstOrDefault() == "--ingest-once";
+if (ingestOnce && !PrivateIngestionRequest.TryParse(args, DateTimeOffset.UtcNow, out ingestion))
 {
-    Console.Error.WriteLine("Live ingestion is disabled: provider licensing, regional access and current coverage remain unresolved. See the active M2 plan.");
+    Console.Error.WriteLine($"Live ingestion is disabled without the reviewed private-use scope and a closed hourly UTC window of at most seven days. Usage: {PrivateIngestionRequest.Usage}");
     return 2;
 }
 
 var maintenance = args is ["--migrate"];
-var builder = WebApplication.CreateBuilder(maintenance ? [] : args);
+var builder = WebApplication.CreateBuilder(maintenance || ingestOnce ? [] : args);
 builder.AddOperations();
 builder.Services.AddResearchPersistence();
 builder.Services.AddSingleton<WorkerHeartbeat>();
@@ -21,23 +23,36 @@ builder.Services.AddHostedService<LifecycleWorker>();
 builder.Services.AddHealthChecks().AddCheck<WorkerHeartbeat>("worker-loop", tags: ["live", "ready"]);
 
 var app = builder.Build();
-if (maintenance)
+if (maintenance || ingestOnce)
 {
     using var cancellation = new CancellationTokenSource();
+    cancellation.CancelAfter(TimeSpan.FromMinutes(5));
     ConsoleCancelEventHandler cancel = (_, eventArgs) => { eventArgs.Cancel = true; cancellation.Cancel(); };
     Console.CancelKeyPress += cancel;
     using var signal = System.Runtime.InteropServices.PosixSignalRegistration.Create(
         System.Runtime.InteropServices.PosixSignal.SIGTERM, context => { context.Cancel = true; cancellation.Cancel(); });
+    var runId = Guid.NewGuid().ToString("N");
+    using var scope = app.Logger.BeginScope(new Dictionary<string, object> { ["RunId"] = runId, ["CorrelationId"] = runId });
     try
     {
-        var runId = Guid.NewGuid().ToString("N");
-        using var scope = app.Logger.BeginScope(new Dictionary<string, object> { ["RunId"] = runId, ["CorrelationId"] = runId });
+        if (ingestion is not null)
+            return await PrivateIngestion.RunAsync(app, ingestion, runId, cancellation.Token);
         await using var database = await app.Services.GetRequiredService<IDbContextFactory<ResearchDbContext>>()
             .CreateDbContextAsync(cancellation.Token);
         database.Database.SetCommandTimeout(60);
         await database.Database.MigrateAsync(cancellation.Token);
-        app.Logger.LogInformation("M2 schema migrations applied; live provider use remains disabled");
+        app.Logger.LogInformation("M2 schema migrations applied; provider access requires a separate explicit private-use command");
         return 0;
+    }
+    catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
+    {
+        app.Logger.LogInformation("M2 one-shot operation cancelled or its five-minute deadline elapsed");
+        return 130;
+    }
+    catch (Exception error)
+    {
+        app.Logger.LogError("M2 one-shot operation failed: {ErrorType}; no exception payload logged", error.GetType().Name);
+        return 1;
     }
     finally
     {

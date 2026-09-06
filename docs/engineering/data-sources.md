@@ -1,6 +1,6 @@
 # Data sources
 
-**Status:** Requirements for capabilities. Product/live vendor approval is unresolved. M2's offline technical candidates and licensing/access blockers are recorded in the [active plan](../exec-plans/active/first-ranking-vertical-slice.md#m2--catalog-and-adapter).
+**Status:** Requirements for capabilities. M2 private single-user ingestion from Kosovo was authorized and verified on 2026-09-06. Binance spot candles, Bybit linear funding/OI and DeFiLlama Ethereum/Solana TVL are selected for that bounded scope. The [active plan](../exec-plans/active/first-ranking-vertical-slice.md#m2-private-use-completion--2026-09-06) records current official terms, destinations, limits and live evidence. Commercial display/redistribution approval remains unresolved and must be revisited before sharing or monetization.
 
 Do not treat names mentioned in conversation or common industry lists as selected vendors. Do not invent API endpoints, history depth, or rate limits. Confirm capabilities against the provider’s official documentation during evaluation.
 
@@ -17,6 +17,14 @@ Abstraction rules: [../design/domain-model.md](../design/domain-model.md), [../d
 - License, redistribution, and display terms are part of vendor fit. A technically complete API that cannot be shown in the product is not a fit.
 
 Each adapter owns: authentication, pagination, rate-limit behavior, DTO mapping, and schema-drift detection hooks.
+
+M2 keeps `OfflineHttp` loopback-only and adds `PrivateProviderHttp` with fixed
+official origins/GET paths, no authentication/proxy/redirects, request pacing and
+finite budgets. Only the explicit private-use worker command can use that path;
+ordinary worker startup remains idle. Provider `ApprovalStatus=Unresolved` retains
+its broader product-approval meaning. No region/IP restriction may be bypassed.
+The live acceptance sample proves three days of coverage and exact stored-data
+replay, not arbitrary history, an SLA, or continuous provider monitoring.
 
 ## Evaluation criteria
 

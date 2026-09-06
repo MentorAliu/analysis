@@ -40,16 +40,17 @@ public sealed class ObservationIngestion(IObservationStore store, TimeProvider c
         {
             cancellationToken.ThrowIfCancellationRequested();
             var adapter = adapters.Single(a => a.ProviderId == instrument.ProviderId);
-            var now = DateTimeOffset.FromUnixTimeMilliseconds(clock.GetUtcNow().ToUnixTimeMilliseconds());
             try
             {
                 var pages = await adapter.ReadAsync(instrument, window, cancellationToken);
+                var now = DateTimeOffset.FromUnixTimeMilliseconds(clock.GetUtcNow().ToUnixTimeMilliseconds());
                 var result = await store.SaveAsync(instrument, window, pages, now, cancellationToken);
                 results.Add(new(instrument.Id, result.Inserted + result.Duplicates == 0 ? "missing" : "stored",
                     result.Inserted, result.Duplicates, null));
             }
             catch (ProviderReadException error)
             {
+                var now = DateTimeOffset.FromUnixTimeMilliseconds(clock.GetUtcNow().ToUnixTimeMilliseconds());
                 await store.QuarantineAsync(instrument, window, error.Code, now, cancellationToken);
                 results.Add(new(instrument.Id, "quarantined", 0, 0, error.Code));
             }

@@ -2,9 +2,10 @@
 
 M1 of the [active execution plan](docs/exec-plans/active/first-ranking-vertical-slice.md)
 provides a React shell, ASP.NET Core API and worker, PostgreSQL, and Redis in Docker
-Compose. M2 adds an offline catalog, normalized observations, EF migrations and
-fixture-tested provider adapters. **Live ingestion remains disabled** until data
-licensing, regional access and actual instrument coverage are resolved.
+Compose. M2 adds a catalog, normalized observations, EF migrations and tested
+provider adapters. **Private-use ingestion from Kosovo is verified** through an
+explicit one-shot command; normal startup does not fetch provider data. Commercial
+sharing and redistribution remain outside the reviewed scope.
 This is an analytics and research product. No features, scores, rankings, trading
 or custody flows are implemented. M3 has not started.
 
@@ -237,24 +238,30 @@ Domain. Domain contains canonical identities, observations and numeric/time rule
 Application owns ingestion ports and batch orchestration. Provider parsing, opaque
 payload storage, EF mappings and operational clients stay in Infrastructure.
 
-## M2 offline catalog and adapters
+## M2 catalog and adapters
 
-Technical candidates are Binance spot candles (1h, USDT quote), Bybit linear
+Selected private-use sources are Binance spot candles (1h, USDT quote), Bybit linear
 perpetual funding and both-sides open interest (base-asset units), and DeFiLlama
-chain TVL (USD) for Ethereum/Solana. BTC fundamentals are inapplicable. These are
-not approved live providers: see the plan's official capability/terms evidence.
-The adapters accept only loopback fixture HTTP servers and never follow redirects.
-The ordinary worker remains a cancellation-aware operational heartbeat. Running
-`worker --ingest-once` exits 2 with the unresolved access/licensing reason.
+chain TVL (USD) for Ethereum/Solana. BTC fundamentals are inapplicable. See the
+[private-use review](docs/exec-plans/active/first-ranking-vertical-slice.md#m2-private-use-completion--2026-09-06)
+for dated official terms, regional restrictions, endpoints and verification.
+Offline tests retain a loopback-only transport. Live transport fixes three official
+HTTPS origins and their approved GET paths; neither transport follows redirects.
+The ordinary worker remains an operational heartbeat. `worker --ingest-once`
+without the explicit private-use flags exits 2 before reading configuration or
+contacting a provider. Provider catalog `ApprovalStatus=Unresolved` continues to
+describe wider product/commercial approval; it is not a blanket personal-use ban.
 
 The schema stores eight candidate instrument refs, payload bytes/SHA-256/mapping
 versions and observation lineage. Numeric inputs use exact decimal parsing with
 at most 28 digits and 18 fractional places; PostgreSQL `numeric` adds no implicit
 scale rounding. Timestamps are UTC with millisecond precision. Funding is a
 fraction, OI is both sides in the base asset, and USDT is never labelled USD.
-Gaps stay missing. Identical reruns are no-ops; conflicting records are quarantined
+Gaps stay missing. Identical observations are no-ops; conflicting records are quarantined
 without changing original observations. Quarantine contains safe error codes and
 window/identity metadata, not raw provider error messages. No scoring schema exists.
+Responses whose server timestamps/metadata change may add new provenance payloads
+on a second run; original observations and their exact lineage remain unchanged.
 
 Run all M2 checks using Node 24.20.0 and Docker Desktop:
 
@@ -271,6 +278,49 @@ data and `.env` are not used. Reports are written to ignored `.artifacts/`.
 The test fixtures and verification executable are excluded from API/worker images.
 Fixtures are documentation examples or explicitly synthetic variants, never
 observed financial history; they are not inserted by normal application startup.
+
+For the separately authorized private-use live check (real public data, no API
+keys or payment), run:
+
+```powershell
+node scripts/verify-m2-private.mjs --private-use --country XK
+```
+
+This uses a fresh `analysis-m2-private-*` project and a three-day closed UTC window.
+It verifies all 11 required series, exact replay of raw payloads, one identical-window
+ingestion, and persistence across container recreation. It never tests provider
+outages or load. If access is denied or coverage is incomplete, it records safe
+errors and stops without an automatic second batch or a regional bypass. The
+script shuts down its containers/networks and **retains its private PostgreSQL
+volume**, plus an ignored `.artifacts/<project>.env` containing only a newly
+generated local database password. Its JSON report identifies that volume and
+configuration. Keep both private; never commit raw provider responses.
+
+For a chosen local stack, initialize its local configuration as above, then:
+
+```powershell
+docker compose -p analysis-local build worker
+docker compose -p analysis-local up -d --wait postgres redis
+docker compose -p analysis-local run --rm --no-deps worker --migrate
+docker compose -p analysis-local -f compose.yaml -f compose.m2-private.yaml run --rm --no-deps worker --ingest-once --private-use --country XK --start-utc 2026-09-01T00:00:00Z --end-utc 2026-09-04T00:00:00Z
+docker compose -p analysis-local -f compose.yaml -f compose.m2-private.yaml down
+```
+
+The sample window is historical; choose explicit closed whole-hour UTC bounds of
+at most seven days for later runs. The override gives only the worker outbound
+network access. Data services publish no ports. Per provider, calls are serialized
+and spaced by at least one second, including retries; at most 128 attempts are
+allowed, with three attempts per request and a five-minute total deadline. Long
+rate-limit waits or access failures stop further requests to that provider.
+Exit codes: 0 stored data, 1 missing/quarantined data or a failed operation, 2 invalid
+scope/window/catalog or unapplied migrations, 130 cancellation/deadline. Ctrl+C or
+SIGTERM cancels I/O; committed prior instruments remain safe to resume. Do not run
+parallel private batches or use this command as an unattended scheduler.
+
+To reopen a verifier's retained database, use its **same** project name and
+`--env-file .artifacts/<project>.env` with both Compose files. Start only PostgreSQL
+and Redis and pass `-e Postgres__Database=analysis_m2_checks` to worker commands.
+Use `down` without `--volumes` to keep collected history.
 
 **Migration owner:** EF Core/Relational/Design **10.0.11**, Npgsql EF provider
 **10.0.3**, local `dotnet-ef` **10.0.11** in `backend/.config/dotnet-tools.json`.
@@ -369,6 +419,7 @@ Do not use force/legacy peer overrides to hide incompatibilities.
 The Router CLI currently emits a dependency circular-import warning mentioning
 `replaceRouteChunk`. Route generation, type checking, lint, builds and navigation
 pass; the warning is recorded in the plan. No runtime adoption beyond the M1
-shell is implied. M2 precision/unit/mapping checks are offline; live provider drift,
-data rights and access verification remain blocked. Rankings contracts, feature
-formulas, scoring and frontend data integration belong to M3–M5.
+shell is implied. M2 private-use access, coverage, precision, lineage and repeat
+ingestion passed on 2026-09-06; this bounded sample is not a history/SLA guarantee
+or permission for commercial redistribution. Rankings contracts, feature formulas,
+scoring and frontend data integration belong to M3–M5. **Next: M3 — Features and scores.**

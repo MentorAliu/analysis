@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process'
 import { randomBytes } from 'node:crypto'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
+import { setTimeout as delay } from 'node:timers/promises'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
 const project = `analysis-m2-check-${randomBytes(6).toString('hex')}`
@@ -60,6 +61,44 @@ try {
   assert.equal(refusal.code, 2)
   assert.match(refusal.stderr, /Live ingestion is disabled/)
   pass('Worker refuses live ingestion before any provider access')
+
+  // Hold a catalog read inside this disposable database so SIGTERM exercises the
+  // real one-shot host before it can construct a provider transport. No egress.
+  const sql = query => compose(['exec', '-T', 'postgres', 'psql', '-U', 'analysis', '-d', 'analysis_m2_checks', '-At', '-v', 'ON_ERROR_STOP=1'], { input: query })
+  const locker = compose(['exec', '-T', 'postgres', 'psql', '-U', 'analysis', '-d', 'analysis_m2_checks', '-v', 'ON_ERROR_STOP=1'], {
+    input: 'SET application_name = \'m2-cancellation-lock\'; BEGIN; LOCK TABLE research."ProviderInstrumentRefs" IN ACCESS EXCLUSIVE MODE; SELECT pg_sleep(30); ROLLBACK;\n', allowFailure: true,
+  })
+  try {
+    let locked = false
+    for (let attempt = 0; attempt < 50; attempt++) {
+      locked = (await sql("SELECT count(*) FROM pg_locks l JOIN pg_stat_activity a ON a.pid=l.pid WHERE a.application_name='m2-cancellation-lock' AND l.relation='research.\"ProviderInstrumentRefs\"'::regclass AND l.granted;\n")).stdout === '1'
+      if (locked) break
+      await delay(100)
+    }
+    assert.ok(locked, 'Disposable catalog lock acquired')
+    const cancelling = (await compose(['run', '--detach', '--no-deps', '-e', 'Postgres__Database=analysis_m2_checks', 'worker', '--ingest-once', '--private-use', '--country', 'XK', '--start-utc', '2021-01-01T00:00:00Z', '--end-utc', '2021-01-02T00:00:00Z'])).stdout
+    let waiting = false
+    for (let attempt = 0; attempt < 50; attempt++) {
+      waiting = (await sql("SELECT count(*) FROM pg_stat_activity WHERE datname='analysis_m2_checks' AND wait_event_type='Lock' AND query LIKE '%ProviderInstrumentRefs%';\n")).stdout === '1'
+      if (waiting) break
+      await delay(100)
+    }
+    assert.ok(waiting, 'One-shot waiting on catalog before provider access')
+    await docker(['stop', '--time', '10', cancelling])
+    const cancelled = JSON.parse((await docker(['inspect', '--format', '{{json .State}}', cancelling])).stdout)
+    assert.equal(cancelled.ExitCode, 130)
+    assert.equal(cancelled.OOMKilled, false)
+    const logs = (await docker(['logs', cancelling])).stdout
+    assert.match(logs, /M2 one-shot operation cancelled/)
+    assert.match(logs, /RunId/)
+    assert.match(logs, /CorrelationId/)
+    assert.doesNotMatch(logs, /Starting bounded private research ingestion/)
+    await docker(['rm', cancelling])
+    pass('Private one-shot SIGTERM cancels blocked database I/O with correlated logs, exit 130 and no provider access')
+  } finally {
+    await sql("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE application_name='m2-cancellation-lock' AND datname='analysis_m2_checks';\n")
+    await locker
+  }
   await compose(['up', '--detach', '--wait', '--wait-timeout', '90', 'worker'])
   const probe = await compose(['exec', '-T', 'worker', 'dotnet', 'Analysis.Worker.dll', '--healthcheck', '/health/ready'])
   assert.equal(jsonLine(probe.stdout).status, 'Healthy')

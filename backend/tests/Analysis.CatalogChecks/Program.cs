@@ -7,11 +7,20 @@ using Analysis.Infrastructure.Persistence;
 
 try
 {
+    if (args is ["--private-snapshot", var from, var to])
+    {
+        string[] command = ["--ingest-once", "--private-use", "--country", "XK", "--start-utc", from, "--end-utc", to];
+        if (!Analysis.Infrastructure.PrivateIngestionRequest.TryParse(command, DateTimeOffset.UtcNow, out var request))
+            throw new ArgumentException("Invalid private snapshot window");
+        Console.WriteLine(JsonSerializer.Serialize(await DatabaseChecks.PrivateSnapshotAsync(request!.Window)));
+        return 0;
+    }
     if (args is ["--verify-persistence"])
     {
         Console.WriteLine(JsonSerializer.Serialize(new { databaseSnapshot = await DatabaseChecks.PersistenceSnapshotAsync() }));
         return 0;
     }
+    await PrivateTransportChecks.RunAsync();
     var start = DateTimeOffset.FromUnixTimeSeconds(1609459200);
     var window = new ReadWindow(start, start.AddDays(1));
     var spot = CatalogSeed.Instruments.First(i => i.ProviderId == "binance");

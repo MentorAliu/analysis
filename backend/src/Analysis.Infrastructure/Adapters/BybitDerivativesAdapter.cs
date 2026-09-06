@@ -4,7 +4,7 @@ using Analysis.Domain;
 
 namespace Analysis.Infrastructure.Adapters;
 
-public sealed class BybitDerivativesAdapter(OfflineHttp http) : IObservationAdapter
+public sealed class BybitDerivativesAdapter(IProviderHttp http) : IObservationAdapter
 {
     public string ProviderId => "bybit";
 

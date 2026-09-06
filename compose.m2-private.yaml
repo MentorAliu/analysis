@@ -1,0 +1,8 @@
+# Explicit one-shot private research only; base Compose worker remains on the internal network.
+# No ports or provider credentials. Use with compose.yaml, never by itself.
+services:
+  worker:
+    networks: [data, private-egress]
+
+networks:
+  private-egress:

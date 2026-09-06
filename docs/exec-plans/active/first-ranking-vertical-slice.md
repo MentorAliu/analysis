@@ -1,6 +1,6 @@
 # First ranking vertical slice
 
-**Status:** Active execution plan. M1 is implemented and verified (2026-09-05). M2's user-authorized offline scope is implemented and verified; live provider use is blocked on licensing/access validation. M3–M5 are not started. M2's live gate and the vertical slice are not complete.
+**Status:** Active execution plan. M1 and M2 are implemented and verified for the user's private, single-user use from Kosovo (2026-09-06). The bounded M2 live acceptance passed with all required data series. Commercial sharing/redistribution is deferred and requires a new rights review. **Next milestone: M3 — Features and scores.** M3–M5 have not started; the overall vertical slice is not complete.
 
 Read first: [AGENTS.md](../../../AGENTS.md), [ARCHITECTURE.md](../../../ARCHITECTURE.md), [../../product/product-spec.md](../../product/product-spec.md), [../../design/domain-model.md](../../design/domain-model.md), [../../design/data-pipeline.md](../../design/data-pipeline.md), [../../design/scoring-model.md](../../design/scoring-model.md), [../../engineering/data-sources.md](../../engineering/data-sources.md), [../../engineering/testing-strategy.md](../../engineering/testing-strategy.md).
 
@@ -261,6 +261,205 @@ Resolved during verification: the Web SDK already includes JSON content, so fixt
 - Normalized OHLCV, funding, OI (and other confirmed fields)
 - Mapping tests from documented fixtures
 
+#### M2 private-use completion — 2026-09-06
+
+Resolved before implementation (official documentation reviewed 2026-09-06):
+
+- Scope is the user's own local research from Kosovo, with no sharing, resale or
+  commercial service. This is a limited-use implementation decision based on the
+  terms below, not a grant of ownership or unrestricted redistribution rights.
+  No account, API key or paid subscription is needed by the selected public endpoints.
+- Binance: [terms](https://www.binance.com/en/terms), effective 2026-07-21,
+  clause 27 permits necessary personal noncommercial/internal use of Binance IP.
+  [Current prohibited countries](https://www.binance.com/en/about-legal/list-of-prohibited-countries),
+  updated 2026-01-05, does not name Kosovo. Use only
+  `https://data-api.binance.vision`, the documented
+  [unauthenticated market-data host](https://developers.binance.com/en/docs/products/spot/faqs/market_data_only),
+  for spot instrument metadata and closed hourly BTC/ETH/SOL USDT candles.
+  [Klines](https://developers.binance.com/en/docs/catalog/core-trading-spot-trading/api/rest-api/market)
+  accept UTC millisecond bounds and at most 1,000 rows per page.
+- Bybit: [API terms](https://www.bybit.com/en/legal/service-specific-terms/API-Terms),
+  updated 2026-01-16, sections 1.2/5.1 permit API development/use subject to limits;
+  sections 6/7 forbid commercial exploitation, resale, identity masking and
+  availability/performance benchmarking. [Platform terms](https://www.bybit.com/en/legal/terms-of-service/Bybit-BTL-Platform-Terms-and-Conditions),
+  effective 2026-09-02, section 15 permits materials for the user's own use and
+  prohibits further distribution without consent. [Restricted countries](https://www.bybit.com/en/help-center/article/Service-Restricted-Countries),
+  updated 2026-09-01, does not name Kosovo. Use `https://api.bybit.com` only;
+  regional rejection terminates that provider, with no alternate-host/proxy bypass.
+  [Funding](https://bybit-exchange.github.io/docs/v5/market/history-fund-rate),
+  [open interest](https://bybit-exchange.github.io/docs/v5/market/open-interest),
+  [instruments](https://bybit-exchange.github.io/docs/v5/market/instrument) and
+  [rate limits](https://bybit-exchange.github.io/docs/v5/rate-limit) remain authoritative:
+  funding is a fraction; intervals come from metadata; linear OI is both sides
+  in base-asset units, not the separate single-side field; pages max 200.
+- DeFiLlama: [terms](https://defillama.com/terms), effective 2025-06-24,
+  sections 1/7 cover official APIs and personal noncommercial use; section 8
+  excludes resale/republication/commercial exploitation and unofficial API access.
+  Use the [documented free API](https://api-docs.defillama.com/) at
+  `https://api.llama.fi/v2/historicalChainTvl/{chain}` for Ethereum/Solana only.
+  Limited private local observation/provenance storage is treated as incidental
+  to this authorized personal research; no redistribution licence is inferred.
+  No Kosovo-specific exclusion found. The free tier publishes no numerical SLA
+  or retention guarantee. Fetch once per chain per run, then filter locally;
+  BTC chain TVL remains inapplicable. Sharing/commercial use needs a new review.
+- Retain SDK **10.0.400**, ASP.NET/.NET runtime and EF Core/Relational/Design/
+  dotnet-ef **10.0.11**, Npgsql and Npgsql EF **10.0.3**, Redis client **3.1.31**,
+  Node **24.20.0** / npm **11.19.0**, PostgreSQL **18.6**, Redis **8.10.1**,
+  Docker **29.7.2** and Compose **5.5.0**. No dependency additions, peer overrides,
+  lockfile changes or migration changes are planned. .NET 10 and Node 24 remain
+  supported LTS: [.NET policy](https://dotnet.microsoft.com/en-us/platform/support/policy),
+  [Node release policy](https://nodejs.org/en/about/previous-releases).
+  Existing Dockerfile/Compose digest pins and EF migration ownership are retained.
+  Compatibility must pass locked container restore/build and the existing checks.
+  [Npgsql EF 10 guidance](https://www.npgsql.org/efcore/release-notes/10.0.html)
+  confirms EF 10/PostgreSQL 18 support. Verifier subprocess handling follows
+  [Node 24.20.0 maintainer docs](https://github.com/nodejs/node/blob/v24.20.0/doc/api/child_process.md)
+  using argument arrays, no shell interpolation and hidden Windows child processes.
+  The versioned nodejs.org docs fetch failed; the exact release-tagged maintainer
+  source was used instead. No dependency/API was substituted.
+- Implementation follows [.NET HttpClient guidance](https://learn.microsoft.com/en-us/dotnet/fundamentals/networking/http/httpclient-guidelines)
+  (one pooled client per provider per run, finite lifetime),
+  [worker cancellation](https://learn.microsoft.com/en-us/dotnet/core/extensions/workers),
+  [EF migration application](https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/applying)
+  and [Compose one-shot runs](https://docs.docker.com/reference/cli/docker/compose/run/).
+  A separate Compose override adds worker egress only when explicitly selected.
+  Live GETs use exact host/path allowlists, an identifying user-agent, no cookies,
+  proxy, credentials or redirects, one request/second/provider, at most 128
+  attempts/provider/run, existing three-attempt retries/10-second delay ceiling,
+  15-second header/body budgets and 4 MiB payload ceiling. Stop further calls to
+  a provider after access/rate/transport failure. The one-shot command requires
+  explicit private-use/Kosovo scope and a closed UTC window of at most seven days;
+  total run deadline is five minutes. Default worker startup does not ingest.
+- Verification uses loopback fixtures for failure, retry and cancellation paths;
+  never availability/load tests against providers. The authorized live check is
+  a small closed three-day window followed by one identical-window ingestion to
+  verify idempotence. Keep payloads and local database configuration in ignored
+  private storage; publish only counts, safe errors, timestamps and hashes.
+
+**Complete for this private-use scope.** The user confirmed Kosovo and authorized completing M2 for their
+own private use. This supersedes the earlier offline-only authorization for
+provider access whose applicable private-use terms have been reviewed. It does
+not authorize commercial distribution, provider credentials, purchases, deployment,
+trading, commits/pushes or M3. Existing M1/M2 observations, migrations, frontend
+foundation and unrelated services/data must be preserved. Commercial storage/
+display/redistribution approval is a later sharing/monetization gate, not a blanket
+prerequisite for this private-use M2 verification. Historical evidence above stays
+intact and describes the earlier offline scope.
+
+Checklist:
+
+- [x] Inspect the clean checkout, operating contract, source-of-truth documents,
+  installed toolchain and existing offline adapters/worker/persistence.
+- [x] Review current official private-use/API terms, Kosovo access, documented
+  endpoints/units/history/rate limits; record selected sources and any unresolved
+  access requirement before dependent live work. No regional bypasses.
+- [x] Record exact retained versions and maintainer implementation guidance before
+  edits. Preserve EF migrations as the sole schema authority and all lockfiles.
+- [x] Implement a bounded, explicit one-shot live worker path with trusted official
+  destinations, cancellation, pacing/retry budgets, safe summaries and provenance.
+  Preserve loopback-only fixture tests and default operational worker behavior.
+- [x] Verify locked restore/build, offline contracts and transport bounds, worker
+  command handling, migrations/persistence and M1 regressions.
+- [x] Verify bounded real BTC/ETH/SOL candles/funding/OI and ETH/SOL fundamentals
+  where access permits, including identical-window replay, provenance/precision/
+  UTC, failures and cancellation. Keep data private in isolated local storage.
+- [x] Update README/provider/roadmap guidance and actual acceptance evidence;
+  report any missing live verification accurately. Stop before M3.
+
+Implementation and observed evidence:
+
+- Added Infrastructure-local `IProviderHttp`, shared `JsonHttp` retry/body handling,
+  `PrivateProviderHttp` policy and strict `PrivateIngestionRequest` parsing. The
+  existing three mapping algorithms/versions remain unchanged. `OfflineHttp`
+  still cannot use a live origin. Application ingestion now records the UTC
+  ingestion timestamp after the provider read, rather than before it.
+- Worker `PrivateIngestion` checks pending migrations and the exact seeded
+  eight-reference catalog before creating live clients. The command is one-shot,
+  cancellation-aware, bounded and correlated; normal startup remains operational
+  only. `compose.m2-private.yaml` adds worker egress explicitly. No frontend,
+  endpoint, transport DTO, schema, migration, lockfile, dependency or image pin changed.
+  `Provider.ApprovalStatus=Unresolved` is retained for wider product approval;
+  reviewed personal use is explicitly selected by the command, not a blanket
+  provider approval seed or a silent global live flag.
+- Private live report: `.artifacts/analysis-m2-private-2811dc2e2021.json`, SHA-256
+  `EBE17A325407A52BC73A68F64C9904682688615B24A9C636F90F411E875D2936`.
+  Window **2026-09-01T00:00:00Z ≤ event < 2026-09-04T00:00:00Z**.
+  Each run made exactly **6 Binance + 9 Bybit + 2 DeFiLlama GETs**. No keys,
+  authentication, proxies, redirected destinations, retries or payment were needed.
+  Kosovo is user-declared; successful access was observed from this execution
+  network, without an IP-geolocation claim or a future access guarantee.
+
+  | Stored series | BTC | ETH | SOL | Observed units |
+  | --- | ---: | ---: | ---: | --- |
+  | Closed 1h spot candles | 72 | 72 | 72 | Base-asset volume; USDT prices/quote volume |
+  | Funding settlements | 9 | 9 | 9 | Fraction |
+  | 1h both-sides open interest | 72 | 72 | 72 | Base-asset units |
+  | Chain TVL observations | Inapplicable | 3 | 3 | USD |
+
+- **465 observations**, zero missing hourly buckets in candle/OI series and zero
+  quarantines. The second identical-window run inserted **0** observations and
+  recognized all **465** duplicates. Exact stored-observation snapshot before/after:
+  `c8d4bf7bccd3fde430b040192067f04cdde31bf103f022bbdaaa7eb27fd23dfb`.
+  Raw bytes replay to decimal-equal observations with UTC, units, identity and
+  SHA-256 lineage checks. Response metadata changed, so payload count grew from
+  **17 to 29**; original facts and their lineage did not change. This is expected
+  provenance preservation, not duplicate observations.
+- Reapplying migrations and recreating the private PostgreSQL container preserved
+  the full final database snapshot:
+  `0ebb4ec9293ab33e23637f7dd3d64f2ba3c85627d6f3def1d614e63a923bb86d`.
+  Non-root worker UID **1654** verified. Retained only the new private data volume
+  `analysis-m2-private-2811dc2e2021_postgres-data` and its ignored configuration
+  `.artifacts/analysis-m2-private-2811dc2e2021.env`; all its containers/networks stopped
+  and removed. Do not publish the volume, configuration or raw payloads.
+- M1 regression: `.artifacts/analysis-m1-check-998cc6257b0f.json`, SHA-256
+  `1A6F1152B4240702814469B4D28D02C532A389047ED8BF0FB227782A3A4D7ECD`.
+  Passed five-service configuration/build/health, OpenAPI 3.1, Vite proxy/HTTP
+  loading, problem details/correlation, non-root/private networks, Redis/PostgreSQL
+  loss and recovery, PG 18 persistence and graceful shutdown. Its own scratch
+  resources were removed. No provider outage/load benchmarking was performed.
+- Offline M2 checks include strict scope/window parsing; credential-free fixed
+  destinations; cross-instrument request/rate limits; long Retry-After refusal;
+  redirect/access-denial stop; HTTP and pacing cancellation; EF drift/migrations,
+  exact decimals, provenance, duplicate/conflict behavior and DB concurrency.
+  Added a real one-shot SIGTERM check during blocked catalog I/O in disposable
+  PostgreSQL, before any provider transport exists: exit **130**, correlated
+  cancellation logs, no provider call. Final report:
+  `.artifacts/analysis-m2-check-20547d6a6e79.json`, SHA-256
+  `04FF0D7DEC63D0DA626B1CD67A035F45C64F7902A324CF4A2CB8C6E06077E57F`.
+  **Failed checks remaining: none. Unavailable checks in private M2: none.**
+  The final offline rerun covers the post-live logging-scope correction; no third
+  live batch was needed. Both Node verifier scripts pass syntax checks and
+  `git diff --check` passes. Docker **29.7.2** / Compose **5.5.0** rechecked.
+- Intermediate failures preserved: initial build failed on an ambiguous nested
+  target-typed constructor; specifying `ReadWindow` fixed it. The expanded verifier
+  initially selected both a stopped one-shot and normal worker ID; removing its
+  own stopped one-shot before normal-worker checks fixed the verifier. Neither
+  failure changed retained user data or required a repeated live batch.
+- Updated README, architecture, provider/testing guidance and roadmap. No providers
+  contacted outside the two bounded data runs. Existing
+  `analysis-m1-20260905_postgres-data` is preserved. The original stack research
+  document still hashes to
+  `BD21BBCCE77D843826B92258047F700CAE1874F6FCA4980E3750120FED618316`.
+
+Changed file scope: `backend/src/Analysis.Application/ObservationIngestion.cs`;
+Infrastructure's three adapter constructor types, `OfflineHttp`, new
+`IProviderHttp`, `JsonHttp`, `PrivateProviderHttp`, `PrivateIngestionRequest` and
+test friend-assembly declaration; worker `Program.cs` and new `PrivateIngestion`;
+CatalogChecks `Program.cs`, `DatabaseChecks`, new private transport/database checks;
+`scripts/verify-m2.mjs`, new `scripts/verify-m2-private.mjs` and
+`compose.m2-private.yaml`; README, architecture, provider/testing guidance,
+roadmap and this plan. No commit, push or deployment was performed.
+
+Limits: this is private local ingestion, not scheduled scanning or a commercial
+licence. A three-day sample does not prove arbitrary historical coverage, all
+future funding intervals, uptime, or freshness SLAs. Provider revisions conflict
+and quarantine rather than overwrite existing facts. No financial values are
+displayed in the shell; feature definitions/weights and golden vectors remain M3,
+generated rankings contract/client remains M4, dashboard data remains M5. Frontend
+type/lint/Vitest/Playwright were not rerun because frontend files/pins were unchanged;
+the M1 integration build/HTTP checks passed and prior browser evidence is retained.
+**Stop before M3; do not mark the overall slice complete.**
+
 ### Frontend testing follow-up (2026-09-06)
 
 User-authorized addition before further milestone work: add Vitest and Playwright to the existing empty shell. Backend already has package-free executable operational/catalog tests and disposable-container M1/M2 verifiers. Preserve that stack, the offline licensing gate, and all M1/M2 application behavior. No rankings contract, invented financial data, provider calls or M3 work.
@@ -508,7 +707,7 @@ acceptance gate.** M3–M5 and the overall vertical slice remain incomplete.
 
 ## Unresolved (must be decided during M1–M2, then recorded)
 
-- Concrete provider(s) and license
+- Concrete providers and private-use scope — resolved for M2 above; wider commercial redistribution remains unresolved until sharing/monetization is authorized.
 - Exact feature list after doc validation
 - Manifest weights
 - Canonical candle interval — M2 resolves spot candles to 1h UTC; OI samples to 1h. Funding/TVL keep provider event timestamps without an invented accrual/daily-close convention.
@@ -517,4 +716,4 @@ acceptance gate.** M3–M5 and the overall vertical slice remain incomplete.
 
 ## Recommended next Codex task
 
-The next work is the **M2 live-provider gate**: establish authorized storage/derived-data/display rights, applicable regional API access and current BTC/ETH/SOL instrument coverage (or choose documented alternatives). Then authorize and implement the live transport/worker run and verify a bounded real-data ingestion. The current task intentionally stops at the user-authorized offline scope. **M3 — Features and scores** is the next implementation milestone after M2's outstanding gate; it has not started. Do not begin M3–M5 or treat the entire vertical slice as complete.
+The M2 private-use acceptance gate passed on 2026-09-06. The exact next milestone is **M3 — Features and scores**: first finalize the documented 15–25 feature definitions and immutable scoring manifest, then implement deterministic feature/scoring jobs, append-only persistence with exact input lineage and golden-vector tests. Keep the existing private-use provider boundaries and revalidate any additional history or series before depending on it. M3 requires its own bounded implementation task; it has not started. Commercial redistribution review belongs before sharing/monetization, not as a blocker to this user's private M3 work. Do not treat M3–M5 or the overall vertical slice as complete.

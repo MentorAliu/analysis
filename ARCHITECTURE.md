@@ -123,6 +123,15 @@ Cache invalidation is a performance concern, not a correctness concern. A cold R
 
 ## Background processing
 
+**Implemented M2 (2026-09-06):** the worker supports explicit `--migrate` and
+bounded `--ingest-once --private-use --country XK` commands. One-shot ingestion
+uses the existing Application orchestration and Infrastructure adapters/store;
+no new service, endpoint or schema authority is introduced. Normal worker startup
+remains an operational heartbeat. The private Compose override adds egress only
+for explicit runs; PostgreSQL/Redis stay internal. Both one-shot and hosted paths
+honor cancellation and log correlation. See the active plan for the private-use
+source review and README for reproducible commands.
+
 **Proposed:** a dedicated worker host in the same modular monolith, sharing domain modules with the API.
 
 - Scheduled jobs for cadence classes defined in [docs/design/data-pipeline.md](docs/design/data-pipeline.md).

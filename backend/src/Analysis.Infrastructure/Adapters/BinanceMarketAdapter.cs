@@ -4,7 +4,7 @@ using Analysis.Domain;
 
 namespace Analysis.Infrastructure.Adapters;
 
-public sealed class BinanceMarketAdapter(OfflineHttp http) : IObservationAdapter
+public sealed class BinanceMarketAdapter(IProviderHttp http) : IObservationAdapter
 {
     public string ProviderId => "binance";
 

@@ -14,6 +14,21 @@ Related: [../design/data-pipeline.md](../design/data-pipeline.md), [../design/sc
 - Frontend tests consume the OpenAPI contract (mocked or generated client). Detect client/API drift in CI.
 - A test that needs “current mainnet data” is not a unit test.
 
+M2's `scripts/verify-m2.mjs` remains offline: loopback fixtures, in-memory private
+transport policy tests and a disposable PostgreSQL database. It covers explicit
+private-use command parsing, host/path allowlists, request/retry budgets, permanent
+provider failure, paced/in-flight cancellation and SIGTERM while one-shot database
+I/O is blocked, before any provider transport is constructed.
+
+The separately invoked `scripts/verify-m2-private.mjs --private-use --country XK`
+performs authorized public data ingestion into its own private database. It checks
+11 data series, exact decimals/units/UTC and raw-byte SHA-256 lineage, no duplicate
+observations on an identical-window run, and persistence after recreation. New
+response metadata can add provenance payloads without changing existing facts.
+It retains its own collected-data volume/local configuration and stops its
+containers; it never runs against a shared database or benchmarks provider
+availability. Live payloads remain private and are not committed as fixtures.
+
 ## Layers
 
 ### Unit tests

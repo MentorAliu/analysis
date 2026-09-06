@@ -126,6 +126,8 @@ internal static class DatabaseChecks
 
     public static async Task<string> PersistenceSnapshotAsync() => await SnapshotAsync(CreateFactory());
 
+    public static Task<object> PrivateSnapshotAsync(ReadWindow window) => PrivateDatabaseChecks.ReadAsync(CreateFactory(), window);
+
     private static async Task<string> SnapshotAsync(Factory factory)
     {
         await using var db = factory.CreateDbContext();

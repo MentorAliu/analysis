@@ -4,7 +4,7 @@ using Analysis.Domain;
 
 namespace Analysis.Infrastructure.Adapters;
 
-public sealed class DefiLlamaFundamentalsAdapter(OfflineHttp http) : IObservationAdapter
+public sealed class DefiLlamaFundamentalsAdapter(IProviderHttp http) : IObservationAdapter
 {
     public string ProviderId => "defillama";
 
