@@ -9,7 +9,10 @@ sharing and redistribution remain outside the reviewed scope.
 M3 adds deterministic features and versioned heuristic scores with immutable
 input lineage and local replay. Private acceptance results are recorded in the
 active plan. M4 adds a private read-only rankings API and generated, validated
-frontend transport. The dashboard and predictive validation remain future work.
+frontend transport. M5 adds the private ranking dashboard. The technical slice is
+accepted under the user-approved reduced private-use scope; verification and
+deferred manual coverage are recorded in the active plan. Predictive
+validation remains future work.
 This is an analytics and research product; trading and custody are excluded.
 
 ## Prerequisites and version pins
@@ -178,8 +181,8 @@ integration. Hosted CI and numeric coverage thresholds are not configured yet.
 ### Frontend integration and component maintenance
 
 `createApplication` supplies the same stable QueryClient to the provider and typed
-Router context. Query owns freshness with its global defaults unchanged; the shell
-makes no data requests or polling. Always define reads with reusable typed
+Router context. Query owns freshness with its global defaults unchanged; M5 adds
+one manual-refresh rankings read at `/`. Always define reads with reusable typed
 `queryOptions` factories (`infiniteQueryOptions` for infinite queries), reuse them
 in hooks/loaders, and derive cache keys from their options. Prefer pure, stable
 consumer `select` projections for subsets/view models while retaining full cached
@@ -188,8 +191,8 @@ the active plan; keep test-only policies isolated. Query's strict recommended
 ESLint configuration enforces options usage.
 
 Frontend ownership is feature-driven: `src/app` owns assembly/providers/config/
-layout/devtools; thin `src/routes` entries compose `src/features/workspace`
-components. Keep feature queries/hooks/schemas/selectors with their feature as they
+layout/devtools; thin `src/routes` entries compose `src/features/workspace` and
+`src/features/rankings` components. Keep queries/hooks/schemas/selectors with their feature as they
 are introduced. `src/components` (including shadcn `ui`) and `src/lib` are shared;
 they never import features. Features must not import app assembly/routes or another
 feature's internals. Unit tests mirror ownership under `tests/unit/app`,
@@ -200,7 +203,7 @@ The reusable `DataTable` takes stable typed columns/data, a canonical `getRowId`
 caption, optional empty state and controlled `sorting`/`onSortingChange` props.
 There is no public table page or financial demo. Query/Router devtools load only
 in development; Table's inspector remains deferred because its unified shell is
-alpha. M4's generated API transport has no dashboard consumer yet.
+alpha. M5 renders M4's generated API transport without per-row requests or polling.
 
 Use the [pinned official shadcn skill and project conventions](AGENTS.md#frontend-component-workflow).
 With the pinned toolchain, inspect context/docs before component changes:
@@ -233,8 +236,8 @@ The host Vite proxy defaults to `http://127.0.0.1:5080`; Compose sets
 `API_PROXY_TARGET=http://api:8080`. If needed, copy `frontend/.env.example` to
 `frontend/.env.local` and set the target. `VITE_` values are public browser build
 inputs, never secrets. Zod validates the public application name. TanStack Query
-keeps all global defaults and has no product requests or polling in the shell.
-M4's feature-owned query factory uses the generated backend contract.
+keeps all global defaults. M5 reads rankings through M4's feature-owned query
+factory and generated backend contract, with manual refresh and no polling.
 
 Backend dependency direction is API/Worker → Infrastructure → Application →
 Domain. Domain contains canonical identities, observations and numeric/time rules;
@@ -482,9 +485,52 @@ Review the backend schema and generated diff together. Hey API 0.99.0 generates
 Fetch/types/Zod 4; no handwritten transport DTOs or duplicate validators. The
 frontend build checks generation drift; the M4 verifier also compares the running
 API's schema. `src/features/rankings` owns transport/queryOptions and passes Query
-cancellation into Fetch. No Query policy overrides, route, dashboard or polling
-are introduced. Existing dependency/image pins are retained; the new generator
+cancellation into Fetch. M5 adds the root dashboard and documented rankings-only
+manual-refresh overrides. Existing dependency/image pins are retained; the generator
 subtree's security override is documented in the contract.
+
+## M5 private ranking workspace
+
+Open `/` in the existing local frontend to read stored BTC/ETH/SOL batches. The
+default model is `slice1-v1`; no data is acquired or recalculated by the page.
+Edit **Model ID**, choose **Latest stored** or enter an **Exact UTC hour** in
+`YYYY-MM-DDTHH:00:00Z` form, then **Load rankings**. An unavailable model or hour
+requires an explicit correction. **Use this exact hour** reads the displayed
+latest batch through the historical API selection. URLs preserve selection and
+display sort; drafts do not change the displayed batch.
+
+**Refresh rankings** performs one new read. There is no polling or refresh on
+window focus/reconnect. Already-requested offline work can resume; **Cancel
+request** prevents that. A failed refresh keeps eligible prior data with its
+original retrieval timestamp and an explicit failure label. Private-access
+denial hides results. Production still requires the existing private-use setting;
+the dashboard adds no login, access bypass or public serving configuration.
+
+Only Composite and Data quality sort. Model rank always remains the API's rank;
+use **Return to model ranking** to restore response order. **View details** opens
+the selected asset below the table with exact six-place scores, category quality,
+feature states and provenance. Composite/category/confidence scores are heuristic
+points, not probabilities. Inapplicable category quality zero is a storage
+placeholder. As-of, knowledge cutoff and retrieval have different meanings;
+historical research reconstructions are not originally published signals.
+
+M5 verification uses test-only synthetic data, never provider services or retained
+databases. Build the existing `e2e` image target, then run `npm run test:e2e:run`.
+The four production projects include axe 4.13.0, keyboard, reflow, forced-colors,
+touch emulation and fixed Linux Chromium screenshot checks. Screenshot updates
+require visual review. Windows Narrator, native 400% browser zoom, physical-device
+and private-user timed/comprehension checks are explicitly deferred under the
+reduced private-use acceptance; they have not passed and do not establish full
+accessibility conformance.
+
+For lab performance, run `npm run test:performance` in that pinned image with
+`--network none --cpus 4 --memory 4g` and a writable `M5_EVIDENCE` directory.
+The harness serves the production bundle and a 200ms loopback response on port
+4175, runs one worker with desktop/constrained profiles, and saves raw timings
+and Chromium timeline traces. It requires `baseline-desktop.json` and
+`baseline-narrow.json` from the unchanged M4 image (`M5_BASELINE=1` with this test
+harness mounted). Baseline evidence and exact results are in the active plan.
+These are lab diagnostics, not field Core Web Vitals or predictive evidence.
 
 ## Production image check and shutdown
 
@@ -527,11 +573,13 @@ Do not use force/legacy peer overrides to hide incompatibilities.
 
 The Router CLI currently emits a dependency circular-import warning mentioning
 `replaceRouteChunk`. Route generation, type checking, lint, builds and navigation
-pass; the warning is recorded in the plan. No runtime adoption beyond the M1
-shell is implied. M2 private-use access, coverage, precision, lineage and repeat
+pass; the warning is recorded in the plan. M2 private-use access, coverage,
+precision, lineage and repeat
 ingestion passed on 2026-09-06; this bounded sample is not a history/SLA guarantee
 or permission for commercial redistribution. M3 feature/scoring, immutable
 persistence and the seven-day private acceptance also passed; the model remains
 an unvalidated heuristic. M4's persisted rankings contract and generated frontend
-transport are implemented. **Next: M5 — Ranking dashboard**, after separate
-authorization; the overall vertical slice remains incomplete.
+transport and M5's private dashboard are implemented. The overall technical slice
+is accepted for private single-user research under the reduced scope recorded in
+the active plan. Deferred manual coverage remains explicit; wider access and full
+accessibility conformance are not established by that acceptance.

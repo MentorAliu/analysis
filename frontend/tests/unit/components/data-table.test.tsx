@@ -17,6 +17,14 @@ const columns: DataTableColumn<Note>[] = [
 const getRowId = (note: Note) => note.id
 const noSorting: SortingState = []
 
+test('optional presentation metadata supplies row headers and a labelled scroll container', () => {
+  const presentation: DataTableColumn<Note>[] = [{ accessorKey: 'label', header: 'Label', enableSorting: false, meta: { rowHeader: true, wrap: true, align: 'right' } }]
+  render(<DataTable data={notes} columns={presentation} getRowId={getRowId} caption="Comfortable notes" sorting={noSorting} onSortingChange={vi.fn()} density="comfortable" tableClassName="min-w-[38rem]" containerProps={{ role: 'region', 'aria-label': 'Notes scroll area', tabIndex: 0 }} />)
+  expect(screen.getByRole('region', { name: 'Notes scroll area' })).toHaveAttribute('tabindex', '0')
+  expect(screen.getByRole('rowheader', { name: 'Bravo' })).toHaveAttribute('scope', 'row')
+  expect(screen.getByRole('table')).toHaveAttribute('data-density', 'comfortable')
+})
+
 test('renders a named semantic table with typed cells and decorative icons', () => {
   render(<DataTable data={notes} columns={columns} getRowId={getRowId} caption="Reference notes" sorting={noSorting} onSortingChange={vi.fn()} />)
   const table = screen.getByRole('table', { name: 'Reference notes' })

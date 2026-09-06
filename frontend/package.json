@@ -25,10 +25,13 @@
     "test:e2e:run": "playwright test && npm run test:e2e:dev",
     "test:e2e:dev": "playwright test --config playwright.dev.config.ts",
     "test:e2e:install": "playwright install chromium firefox webkit",
-    "test:e2e:report": "playwright show-report"
+    "test:e2e:report": "playwright show-report",
+    "test:performance": "playwright test --config playwright.performance.config.ts"
   },
   "overrides": {
-    "@hey-api/json-schema-ref-parser": { "js-yaml": "4.3.1" }
+    "@hey-api/json-schema-ref-parser": {
+      "js-yaml": "4.3.1"
+    }
   },
   "dependencies": {
     "@tanstack/react-query": "5.102.8",
@@ -44,6 +47,7 @@
     "zod": "4.5.4"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
     "@eslint/js": "10.0.1",
     "@hey-api/openapi-ts": "0.99.0",
     "@playwright/test": "1.63.0",

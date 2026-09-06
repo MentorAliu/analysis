@@ -1,6 +1,7 @@
 import { act, render, screen, within } from '@testing-library/react'
 import { createMemoryHistory } from '@tanstack/react-router'
-import { expect, test } from 'vitest'
+import { expect, test, vi } from 'vitest'
+import fixture from '../rankings/fixtures/rankings.json'
 import { createApplication } from '@/app/application'
 import { ApplicationRoot } from '@/app/providers'
 
@@ -12,13 +13,13 @@ async function renderRoute(path: string) {
   })
 }
 
-test('workspace explains the absence of data and offers research context', async () => {
+test('workspace renders persisted rankings inside the preserved shell', async () => {
+  vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify(fixture), { headers: { 'content-type': 'application/json' } })))
   await renderRoute('/')
   const main = within(screen.getByRole('main'))
-  expect(await main.findByRole('heading', { name: 'No research data yet' })).toBeInTheDocument()
-  expect(main.getByText(/Data sources have not been connected/)).toBeInTheDocument()
-  expect(main.getByRole('link', { name: 'About this workspace' })).toHaveAttribute('href', '/about')
-  expect(main.queryByRole('table')).not.toBeInTheDocument()
+  expect(await main.findByRole('heading', { name: 'Asset comparison' })).toBeInTheDocument()
+  expect(main.getByRole('table')).toBeInTheDocument()
+  expect(screen.getByRole('navigation').querySelector('a[href="/about"]')).toBeInTheDocument()
 })
 
 test('about explains the analytics-only product boundary', async () => {

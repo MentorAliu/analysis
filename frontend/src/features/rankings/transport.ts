@@ -42,5 +42,11 @@ export async function readRankings(query: GetRankingsData['query'] = {}, signal?
   // This schema is generated; there is no parallel handwritten transport model.
   const parsed = zRankingsResponse.safeParse(result.data)
   if (!parsed.success) throw new RankingsContractError()
+  const data = parsed.data
+  const exact = normalized.asOfUtc
+  if (data.batch.model.id !== normalized.modelId || data.selection !== (exact ? 'exact' : 'latest') ||
+    data.requestedAsOfUtc !== (exact ?? null) || (exact && data.batch.asOfUtc !== exact.replace('Z', '.000Z'))) {
+    throw new RankingsContractError()
+  }
   return parsed.data
 }

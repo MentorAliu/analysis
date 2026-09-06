@@ -1,0 +1,176 @@
+import { test, expect, ready, rankingsFixture, problemResponse, rowSymbols } from '../support/rankings'
+
+test('sort and refresh preserve canonical details, exact decimals and API ranks', async ({ page, api }) => {
+  await page.goto('/'); await ready(page)
+  expect(await rowSymbols(page)).toEqual(['BTC', 'ETH', 'SOL'])
+  await page.getByRole('button', { name: 'View details for BTC' }).click()
+  await expect(page.getByRole('heading', { name: 'BTC details' })).toBeFocused()
+  await expect(page.getByText('+12.345678', { exact: true })).toBeVisible()
+  const category = page.getByRole('region', { name: 'Fundamentals category' })
+  await expect(category.getByText('Not applicable', { exact: true })).toHaveCount(2)
+  await expect(category.getByText('0.000000', { exact: true })).toHaveCount(0)
+  await page.getByRole('button', { name: 'Snapshot identifiers and hashes' }).click()
+  await page.getByRole('button', { name: /Composite.*Sort descending/ }).click()
+  await expect(page.getByRole('columnheader', { name: /Composite/ })).toHaveAttribute('aria-sort', 'descending')
+  await expect(page.getByRole('button', { name: /Composite.*Sort ascending/ })).toBeFocused()
+  expect(await rowSymbols(page)).toEqual(['ETH', 'BTC', 'SOL'])
+  await expect(page.locator('tbody tr').first().locator('td').first()).toHaveText('2')
+  await page.getByRole('button', { name: /Composite.*Sort ascending/ }).click()
+  expect(await rowSymbols(page)).toEqual(['BTC', 'ETH', 'SOL'])
+  await page.getByRole('button', { name: /Composite.*Clear sorting/ }).click()
+  await expect(page).not.toHaveURL(/sort=/)
+  await page.getByRole('button', { name: /Data quality.*Sort descending/ }).click()
+  expect(await rowSymbols(page)).toEqual(['BTC', 'SOL', 'ETH'])
+  expect(api.requests).toHaveLength(1)
+  await page.getByRole('button', { name: 'Refresh rankings', exact: true }).click()
+  await expect(page.getByRole('status')).toContainText('same stored batch')
+  await expect(page.getByRole('heading', { name: 'BTC details' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Snapshot identifiers and hashes' })).toHaveAttribute('aria-expanded', 'true')
+  expect(api.requests).toHaveLength(2)
+  await page.getByRole('button', { name: 'Return to model ranking', exact: true }).click()
+  await page.getByRole('button', { name: 'Close and return to row' }).click()
+  await expect(page.getByRole('button', { name: 'View details for BTC' })).toBeFocused()
+  await expect(page.getByRole('button', { name: 'View details for BTC' })).toBeInViewport()
+  await page.getByRole('button', { name: 'View details for ETH' }).click()
+  await expect(page.getByText('Missing — no category score', { exact: true })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Fundamentals category' }).getByText('0.000000', { exact: true })).toBeVisible()
+})
+
+test('exact selection, history, reload and scalar IDs round trip', async ({ page, api }) => {
+  await page.goto('/'); await ready(page)
+  await page.getByRole('button', { name: 'Use this exact hour' }).click()
+  await expect(page).toHaveURL(/asOfUtc=2021-01-08T00%3A00%3A00Z/)
+  await expect(page.getByText(/Exact historical hour/)).toBeVisible()
+  expect(api.requests).toHaveLength(2)
+  for (const id of ['123', 'true', 'null']) {
+    await page.getByRole('textbox', { name: 'Model ID', exact: true }).fill(id)
+    await page.getByRole('button', { name: 'Load rankings' }).click()
+    await expect(page.getByRole('status')).toContainText(`Model ${id},`)
+    expect(api.requests.at(-1)?.searchParams.get('modelId')).toBe(id)
+  }
+  const count = api.requests.length
+  await page.goBack(); await expect(page.getByRole('textbox', { name: 'Model ID' })).toHaveValue('true')
+  await page.goForward(); await expect(page.getByRole('textbox', { name: 'Model ID' })).toHaveValue('null')
+  expect(api.requests).toHaveLength(count)
+  await page.reload(); await ready(page)
+  expect(api.requests).toHaveLength(count + 1)
+  await expect(page.getByRole('textbox', { name: 'Exact UTC hour', exact: true })).toHaveValue('2021-01-08T00:00:00Z')
+})
+
+test('invalid URLs make zero requests and remain correctable', async ({ page, api }) => {
+  for (const search of ['modelId=BAD', 'modelId=', 'modelId=a&modelId=b', 'ModelId=a', 'sort=wrong', 'unknown=x', 'asOfUtc=2023-02-29T00:00:00Z', 'asOfUtc=9999-01-01T00:00:00Z', 'asOfUtc=2021-01-08T00:30:00Z']) {
+    await page.goto(`/?${search}`)
+    await expect(page.getByRole('alert')).toContainText('Check the selection')
+    expect(api.requests).toHaveLength(0)
+  }
+  await expect(page.getByRole('textbox', { name: 'Exact UTC hour' })).toHaveValue('2021-01-08T00:30:00Z')
+  await page.getByRole('button', { name: 'Use default selection' }).click()
+  await ready(page); expect(api.requests).toHaveLength(1)
+})
+
+test('invalid drafts preserve displayed context, history and focus', async ({ page, api }) => {
+  await page.goto('/'); await ready(page)
+  const url = page.url()
+  await page.getByRole('textbox', { name: 'Model ID' }).fill(' Invalid ')
+  expect(api.requests).toHaveLength(1)
+  await page.getByRole('button', { name: 'Load rankings' }).click()
+  await expect(page.getByRole('textbox', { name: 'Model ID' })).toBeFocused()
+  await expect(page.getByRole('textbox', { name: 'Model ID' })).toHaveValue(' Invalid ')
+  await expect(page.getByRole('table')).toBeVisible()
+  expect(page.url()).toBe(url); expect(api.requests).toHaveLength(1)
+})
+
+test('abandoned delayed responses cannot replace another selection and cancel restores focus', async ({ page, api }) => {
+  let release: () => void = () => {}
+  const wait = new Promise<void>(resolve => { release = resolve })
+  api.handler = async url => { if (url.searchParams.get('modelId') === 'slice1-v1') await wait; return { body: rankingsFixture(url) } }
+  await page.goto('/'); await expect(page.getByRole('status')).toContainText('Loading rankings')
+  await page.getByRole('textbox', { name: 'Model ID' }).fill('123')
+  await page.getByRole('button', { name: 'Load rankings' }).click()
+  await ready(page); release()
+  await expect(page.getByRole('status')).toContainText('Model 123,')
+  expect(api.requests).toHaveLength(2)
+  let releaseRefresh: () => void = () => {}
+  const waitRefresh = new Promise<void>(resolve => { releaseRefresh = resolve })
+  api.handler = async url => { await waitRefresh; return { body: rankingsFixture(url) } }
+  await page.getByRole('button', { name: 'Refresh rankings', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Refresh rankings', exact: true })).toBeFocused()
+  await page.keyboard.press('Enter')
+  expect(api.requests).toHaveLength(3)
+  await page.getByRole('button', { name: 'Cancel request' }).click()
+  await expect(page.getByRole('status')).toHaveText('Request cancelled.')
+  await expect(page.getByRole('button', { name: 'Refresh rankings', exact: true })).toBeFocused()
+  releaseRefresh()
+  await expect(page.getByRole('table')).toBeVisible()
+})
+
+test('error recovery retains eligible verified data; denial suppresses it', async ({ page, api }) => {
+  await page.goto('/'); await ready(page)
+  for (const [status, code, title] of [[503, 'schema-not-ready', 'Rankings service unavailable'], [503, 'database-unavailable', 'Rankings service unavailable'], [500, 'internal-error', 'Rankings request failed']] as const) {
+    api.handler = () => problemResponse(status, code)
+    await page.getByRole('button', { name: 'Refresh rankings', exact: true }).click()
+    await expect(page.getByRole('alert')).toContainText(title)
+    await expect(page.getByRole('alert')).toContainText('Previously retrieved; refresh failed')
+    await expect(page.getByRole('table')).toBeVisible()
+  }
+  for (const response of [{ body: { invalid: 'success' } }, { body: '<html>unexpected</html>', contentType: 'text/html' }, { body: { title: 'malformed problem' }, status: 503, contentType: 'application/problem+json' }]) {
+    api.handler = () => response
+    await page.getByRole('button', { name: 'Refresh rankings', exact: true }).click()
+    await expect(page.getByRole('alert')).toContainText('Response could not be verified')
+    await expect(page.getByRole('table')).toBeVisible()
+  }
+  api.handler = () => problemResponse(403, 'private-use-disabled')
+  await page.getByRole('button', { name: 'Refresh rankings', exact: true }).click()
+  await expect(page.getByRole('alert')).toContainText('Private access is disabled')
+  await expect(page.getByRole('table')).toHaveCount(0)
+  api.handler = url => ({ body: rankingsFixture(url) })
+  await page.getByRole('button', { name: 'Retry request' }).click(); await ready(page)
+  await expect(page.getByRole('alert')).toHaveCount(0)
+})
+
+test('not-found guidance and server field errors support explicit correction', async ({ page, api }) => {
+  api.handler = () => problemResponse(404, 'model-not-found')
+  await page.goto('/?modelId=missing')
+  await expect(page.getByRole('alert')).toContainText('Model not found')
+  api.handler = url => url.searchParams.has('asOfUtc') ? problemResponse(404, 'batch-not-found') : { body: rankingsFixture(url) }
+  await page.getByRole('button', { name: 'Use default model' }).click(); await ready(page)
+  await page.getByRole('button', { name: 'Use this exact hour' }).click()
+  await expect(page.getByRole('alert')).toContainText('No stored batch matches this exact UTC hour')
+  await expect(page.getByRole('table')).toHaveCount(0)
+  await page.getByRole('button', { name: 'Use latest stored' }).click(); await ready(page)
+  api.handler = () => problemResponse(400, 'invalid-query', { errors: { modelId: ['Model rejected by service.'], other: ['Additional synthetic error.'] } })
+  await page.getByRole('button', { name: 'Refresh rankings', exact: true }).click()
+  await expect(page.getByRole('textbox', { name: 'Model ID' })).toBeFocused()
+  await expect(page.getByText('Model rejected by service.', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Request details' }).click()
+  await expect(page.getByText('other: Additional synthetic error.', { exact: true })).toBeVisible()
+})
+
+test('offline work pauses, resumes once when requested, and cancellation prevents resumption', async ({ page, api }) => {
+  await page.goto('/'); await ready(page)
+  await page.evaluate(() => window.dispatchEvent(new Event('offline')))
+  await page.getByRole('button', { name: 'Refresh rankings', exact: true }).click()
+  await expect(page.getByRole('status')).toContainText('Request paused while offline')
+  expect(api.requests).toHaveLength(1)
+  await page.getByRole('button', { name: 'Cancel request' }).click()
+  await page.evaluate(() => window.dispatchEvent(new Event('online')))
+  await expect(page.getByRole('status')).toContainText('Request cancelled')
+  expect(api.requests).toHaveLength(1)
+  await page.evaluate(() => { window.dispatchEvent(new Event('offline')); window.dispatchEvent(new Event('focus')) })
+  await page.getByRole('button', { name: 'Refresh rankings', exact: true }).click()
+  await expect(page.getByRole('status')).toContainText('Request paused while offline')
+  await page.evaluate(() => window.dispatchEvent(new Event('online')))
+  await expect(page.getByRole('status')).toContainText('same stored batch')
+  expect(api.requests).toHaveLength(2)
+  await page.getByRole('navigation').getByRole('link', { name: 'About', exact: true }).click()
+  await page.goBack(); await ready(page)
+  expect(api.requests).toHaveLength(2)
+})
+
+test('all-not-ready retains every row and reported quality without assigning ranks', async ({ page, api }) => {
+  api.handler = url => ({ body: rankingsFixture(url, 'not-ready') })
+  await page.goto('/'); await ready(page)
+  await expect(page.getByText('No ranked scores in this stored batch.')).toBeVisible()
+  await expect(page.getByRole('cell', { name: 'Unranked', exact: true })).toHaveCount(3)
+  await expect(page.getByRole('cell', { name: '100.00', exact: true })).toHaveCount(3)
+})

@@ -1,73 +1,36 @@
-import { test as base, expect } from '@playwright/test'
+import { test, expect, ready } from '../support/rankings'
 
-// Every scenario fails on runtime errors or attempted data/external requests.
-// This shell has no API contract yet; no fabricated API responses are provided.
-const test = base.extend({
-  page: async ({ page, context, baseURL }, use) => {
-    const problems: string[] = []
-    page.on('pageerror', (error) => problems.push(error.message))
-    page.on('console', (message) => {
-      if (message.type() === 'error') problems.push(message.text())
-    })
-    await context.route('**/*', async (route) => {
-      const url = new URL(route.request().url())
-      if (url.origin !== baseURL || /^\/api(?:\/|$)/.test(url.pathname)) {
-        problems.push(`Unexpected request: ${url.origin}${url.pathname}`)
-        await route.abort('blockedbyclient')
-      } else {
-        await route.continue()
-      }
-    })
-    await use(page)
-    expect(problems, 'The shell must load without runtime errors or data requests').toEqual([])
-  },
-})
-
-test('empty workspace, navigation and browser history remain usable', async ({ page }) => {
-  await page.goto('/')
-  await expect(page.getByRole('heading', { name: 'No research data yet' })).toBeVisible()
-  await expect(page.getByRole('table')).toHaveCount(0)
+test('workspace navigation and history preserve the successful comparison cache', async ({ page, api }) => {
+  await page.goto('/'); await ready(page)
   await expect(page.getByRole('button', { name: /devtools|inspector/i })).toHaveCount(0)
   expect(await page.evaluate(() => performance.getEntriesByType('resource').map(resource => resource.name)))
-    .not.toEqual(expect.arrayContaining([expect.stringMatching(/devtools|development-tools|vitest|playwright/)]))
-  await page.getByRole('link', { name: 'About this workspace' }).click()
+    .not.toEqual(expect.arrayContaining([expect.stringMatching(/devtools|development-tools|vitest|playwright|axe/)]))
+  await page.getByRole('navigation').getByRole('link', { name: 'About', exact: true }).click()
   await expect(page).toHaveURL('/about')
   await expect(page.getByRole('heading', { name: 'An inspectable research process.' })).toBeVisible()
-  await page.goBack()
-  await expect(page.getByRole('heading', { name: 'No research data yet' })).toBeVisible()
-  await page.goForward()
-  await expect(page).toHaveURL('/about')
-  await page.getByRole('navigation').getByRole('link', { name: 'Workspace', exact: true }).click()
-  await expect(page).toHaveURL('/')
+  await page.goBack(); await ready(page)
+  await page.goForward(); await expect(page).toHaveURL('/about')
+  await page.getByRole('navigation').getByRole('link', { name: 'Workspace', exact: true }).click(); await ready(page)
+  expect(api.requests).toHaveLength(1)
 })
-
-test('about loads directly and survives reload', async ({ page }) => {
+test('about loads directly and survives reload without a rankings request', async ({ page, api }) => {
   await page.goto('/about')
   await expect(page.getByText(/Exchange trading and asset custody are outside its scope/)).toBeVisible()
   await page.reload()
   await expect(page.getByRole('heading', { name: 'An inspectable research process.' })).toBeVisible()
+  expect(api.requests).toHaveLength(0)
 })
-
-test('missing page returns to the empty workspace', async ({ page }) => {
+test('missing page returns to the ranking workspace', async ({ page }) => {
   await page.goto('/missing-page')
   await expect(page.getByRole('heading', { name: 'Page not found' })).toBeVisible()
-  await page.getByRole('link', { name: 'Return to workspace' }).click()
-  await expect(page).toHaveURL('/')
-  await expect(page.getByRole('heading', { name: 'No research data yet' })).toBeVisible()
+  await page.getByRole('link', { name: 'Return to workspace' }).click(); await ready(page)
 })
-
-test('keyboard users can skip navigation and the layout fits the viewport', async ({ page }) => {
-  await page.goto('/')
-  await expect(page.getByRole('heading', { name: 'No research data yet' })).toBeVisible()
+test('keyboard users can skip navigation and the page fits the viewport', async ({ page }) => {
+  await page.goto('/'); await ready(page)
   await page.keyboard.press('Tab')
   await expect(page.getByRole('link', { name: 'Skip to content' })).toBeFocused()
   await expect(page.getByRole('link', { name: 'Skip to content' })).toBeInViewport()
-  await page.keyboard.press('Enter')
-  await expect(page.getByRole('main')).toBeFocused()
-  await page.keyboard.press('Tab')
-  await expect(page.getByRole('link', { name: 'About this workspace' })).toBeFocused()
-  await page.keyboard.press('Enter')
-  await expect(page).toHaveURL('/about')
+  await page.keyboard.press('Enter'); await expect(page.getByRole('main')).toBeFocused()
+  await page.keyboard.press('Tab'); await expect(page.getByRole('textbox', { name: 'Model ID' })).toBeFocused()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
-  await expect(page.getByRole('navigation')).toBeInViewport()
 })

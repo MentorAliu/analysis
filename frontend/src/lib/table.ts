@@ -5,6 +5,7 @@ export const dataTableFeatures = tableFeatures({
   rowSortingFeature,
   sortedRowModel: createSortedRowModel(),
   sortFns,
+  columnMeta: {} as { align?: 'left' | 'right'; wrap?: boolean; rowHeader?: boolean },
 })
 
 export type DataTableColumn<TData extends RowData> = ColumnDef<typeof dataTableFeatures, TData>

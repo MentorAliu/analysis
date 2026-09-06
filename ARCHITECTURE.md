@@ -11,7 +11,7 @@ High-level system shape for the crypto intelligence platform. Product intent liv
 | Application kind | Requirement | Analytics and research only; no trading or custody |
 | Backend shape | Proposed | ASP.NET Core modular monolith: API host + worker host |
 | Frontend shape | Proposed | React + TypeScript SPA on Vite |
-| Frontend data/routing | Proposed | TanStack Router, TanStack Query, Zod, shadcn/ui |
+| Frontend data/routing | Implemented (M1–M5) | TanStack Router, TanStack Query, Zod, shadcn/ui |
 | API contract | Requirement; M4 implemented | REST + OpenAPI; generated frontend client/types/runtime validation |
 | Persistence | Proposed | PostgreSQL authoritative; Redis disposable cache/coordination |
 | Local runtime | Proposed | Docker Compose on Docker Desktop |
@@ -188,9 +188,11 @@ isolated factories and memory histories. Router coordinates route loading with
 `defaultPreloadStaleTime: 0`; Query owns cache freshness. Construct `new QueryClient()`
 with unchanged global Query defaults: no global defaults configuration or setters.
 Feature-required per-query options must document their reason in the owning
-factory and active plan; test-only policies remain isolated. Product queries and
-polling remain future contract-specific work. Pass Query's AbortSignal to transport
-I/O when that integration is implemented.
+factory and active plan; test-only policies remain isolated. M5 rankings uses a
+single generated-contract read with AbortSignal propagation. Its manual refresh
+policy disables only refetchOnMount, refetchOnWindowFocus, refetchOnReconnect and
+retry. There is no rankings loader, prefetch or polling. Requested offline work
+may resume; reconnect by itself does not refresh a displayed comparison.
 
 **Required frontend ownership:**
 
@@ -199,7 +201,8 @@ frontend/src/
   app/                         application factory, providers, config, layout, devtools
   routes/                      thin file-based Router entries; compose feature components
   features/
-    workspace/components/      workspace and about views
+    workspace/components/      about view
+    rankings/                  selection, transport, query options, presentation
   components/                  reusable DataTable
     ui/                        shared shadcn primitives
   lib/                         shared utilities and Table features/types
@@ -224,6 +227,8 @@ validation belongs in the query function/generated transport boundary.
 `DataTable` is a reusable headless Table v9 adapter composed with shadcn Table and
 Button primitives. Callers own stable typed columns/data, canonical row IDs and
 controlled single-column sorting; caption and empty state remain semantic HTML.
+Optional comfortable density, table/container props and typed alignment/wrapping/
+row-header metadata support rankings without changing existing caller defaults.
 It has no public route, pagination, filtering or financial columns. React Icons
 provides named Lucide icons. Query and Router inspectors receive the actual
 application instances through a development-only lazy import; the production
@@ -234,10 +239,20 @@ Zod validates public configuration. Direct Zod 4 Standard Schema URL validation
 and loader/Query cache sharing are verified on a test-only memory route. M4 uses
 Hey API 0.99.0 to generate the Fetch client, types and Zod 4 validators into
 `src/lib/api/generated` from `contracts/openapi/v1.json`. `features/rankings` owns
-transport validation/error handling and reusable `queryOptions`; no consumer or
-Query policy override is added. No parallel transport model is introduced.
-Rankings filters, asset/time-range pages, product polling and
-financial charts are future work (charting library remains **Unresolved**).
+transport validation/error handling and reusable `queryOptions`. M5 renders `/`
+from this full envelope; post-schema checks reject mismatched model/selection/hour.
+The thin route validates strict modelId/asOfUtc/sort search state. App assembly's
+URLSearchParams parser retains strings and duplicate arrays; the route strips the
+default sort when generating URLs. Selection submissions push history; sorting
+replaces it. Router restores scroll, and the query cache retains matching results.
+Draft input, selection, canonical detail identity and presentation order are
+separate from server data. A small feature context lets stable Table v9 columns
+update detail-button state without remounting rows. No extra Query observers or
+server-data caches are used. BigInt millionths preserve decimal comparisons and
+ties-to-even presentation; only the API assigns ranks. Failed refreshes label
+retained data; private-access denial hides it. No parallel DTO model is introduced.
+Time ranges, product polling and financial charts remain future work (charting
+library remains **Unresolved**).
 
 Follow current official documentation listed in [AGENTS.md](AGENTS.md). Prefer each library’s recommended patterns over ad-hoc alternatives.
 

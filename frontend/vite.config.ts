@@ -16,7 +16,7 @@ export default defineConfig(({ mode }) => {
       apply: 'build',
       generateBundle(_options, bundle) {
         const modules = Object.values(bundle).flatMap(output => output.type === 'chunk' ? Object.keys(output.modules) : [])
-        const forbidden = modules.filter(id => /(?:@tanstack\/[^/]*devtools|\/app\/development-tools|\/tests\/|\/node_modules\/(?:vitest|@playwright|shadcn)\/)/.test(id.replaceAll('\\', '/')))
+        const forbidden = modules.filter(id => /(?:@tanstack\/[^/]*devtools|\/app\/development-tools|\/tests\/|\/node_modules\/(?:vitest|@playwright|@axe-core|axe-core|shadcn)\/)/.test(id.replaceAll('\\', '/')))
         if (forbidden.length) this.error(`Development or test modules in production: ${forbidden.join(', ')}`)
         this.info(`Production boundary checked: ${modules.length} rendered modules; no devtools, tests or CLI.`)
       },

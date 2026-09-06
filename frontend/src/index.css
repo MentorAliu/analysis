@@ -17,6 +17,44 @@
   --color-input: var(--border);
   --color-destructive: var(--destructive);
   --color-border: var(--border);
+  --color-score-negative: oklch(0.40 0.06 310);
+  --color-attention: oklch(0.43 0.08 75);
+  --color-attention-surface: oklch(0.97 0.025 85);
+  --color-error: oklch(0.43 0.16 27);
+  --color-error-surface: oklch(0.97 0.012 27);
+  --color-control: oklch(0.55 0.02 180);
+}
+
+@layer components {
+  .rankings-page { @apply flex min-w-0 flex-col gap-8 py-8; overflow-wrap: anywhere; }
+  .ranking-panel { @apply min-w-0 rounded-xl border bg-card p-6; }
+  .ranking-heading { @apply text-xl font-semibold leading-7 tracking-tight; }
+  .ranking-metadata { @apply grid min-w-0 gap-x-6 gap-y-4 text-sm leading-5 sm:grid-cols-2; }
+  .ranking-metadata dt { @apply mb-2 text-muted-foreground; }
+  .ranking-metadata dd { @apply m-0 min-w-0 break-words; overflow-wrap: anywhere; }
+  .ranking-hash { @apply font-mono text-sm; overflow-wrap: anywhere; }
+  nav[aria-label="Main navigation"] { flex-wrap: wrap; }
+  body > #root { overflow-wrap: anywhere; }
+  [data-density="comfortable"] :is(th, td) { padding: .75rem; }
+  [data-density="comfortable"] tbody tr { height: 4rem; }
+  [data-density="comfortable"] caption { @apply whitespace-normal text-left; }
+  [data-score-direction="positive"] { @apply text-primary; }
+  [data-score-direction="negative"] { @apply text-score-negative; }
+  [aria-disabled="true"] { cursor: progress; }
+}
+
+/* Unlayered so primitive outline/ring utilities cannot mask the solid focus indicator. */
+:where(button, input, [tabindex], [role="radio"]):focus-visible {
+  outline: 2px solid var(--primary); outline-offset: 2px; box-shadow: none;
+}
+@layer base {
+  [data-slot="field-error"] { color: var(--color-error); }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  }
+}
+@media (forced-colors: active) {
+  :where(button, input, [tabindex], [role="radio"]):focus-visible { outline-color: Highlight; }
 }
 
 :root {

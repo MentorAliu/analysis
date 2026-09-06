@@ -61,12 +61,25 @@ describe('generated rankings contract and transport', () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response('', { status: 200, headers: { 'content-type': 'application/json', 'content-length': '0' } })))
     await expect(readRankings()).rejects.toBeInstanceOf(RankingsContractError)
   })
-  it('normalizes defaults and isolates exact/model cache identities without policy overrides', () => {
+  it('normalizes cache identities with only the approved manual-read overrides', () => {
     expect(rankingsQueryOptions().queryKey).toEqual(rankingsQueryOptions({ modelId: 'slice1-v1' }).queryKey)
     expect(rankingsQueryOptions().queryKey).not.toEqual(rankingsQueryOptions({ asOfUtc: '2021-01-08T00:00:00Z' }).queryKey)
     expect(rankingsQueryOptions().queryKey).not.toEqual(rankingsQueryOptions({ modelId: 'stored-v2' }).queryKey)
-    expect(Object.keys(rankingsQueryOptions()).sort()).toEqual(['queryFn', 'queryKey'])
+    expect(rankingsQueryOptions()).toMatchObject({ refetchOnMount: false, refetchOnWindowFocus: false, refetchOnReconnect: false, retry: false })
+    expect(Object.keys(rankingsQueryOptions()).sort()).toEqual(['queryFn', 'queryKey', 'refetchOnMount', 'refetchOnReconnect', 'refetchOnWindowFocus', 'retry'])
     expect(new QueryClient().getDefaultOptions()).toEqual({})
+  })
+  it.each(['model', 'selection', 'requested-hour', 'batch-hour'])('rejects incoherent %s after schema validation', async mismatch => {
+    const data = structuredClone(fixture)
+    data.batch.model.id = 'stored-v2'
+    Object.assign(data, { selection: 'exact', requestedAsOfUtc: '2021-01-08T00:00:00Z' })
+    data.batch.asOfUtc = '2021-01-08T00:00:00.000Z'
+    if (mismatch === 'model') data.batch.model.id = 'slice1-v1'
+    if (mismatch === 'selection') data.selection = 'latest'
+    if (mismatch === 'requested-hour') data.requestedAsOfUtc = null
+    if (mismatch === 'batch-hour') data.batch.asOfUtc = '2021-01-08T01:00:00.000Z'
+    respond(data)
+    await expect(readRankings({ modelId: 'stored-v2', asOfUtc: '2021-01-08T00:00:00Z' })).rejects.toBeInstanceOf(RankingsContractError)
   })
   it('caches only the validated full response and leaves errors out of data', async () => {
     const client = new QueryClient()

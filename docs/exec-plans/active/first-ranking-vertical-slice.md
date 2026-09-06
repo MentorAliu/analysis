@@ -1,6 +1,6 @@
 # First ranking vertical slice
 
-**Status:** Active execution plan. M1–M4 are implemented and verified for private single-user research (2026-09-06). M3's single seven-day Kosovo acquisition and 75-score acceptance passed; M4 reads persisted scores and was verified with synthetic disposable data. Commercial sharing/redistribution requires a separate rights review. **Next milestone: M5 — Ranking dashboard**, requiring its own authorization. M5 remains unstarted; the overall vertical slice is not complete.
+**Status:** M1–M5 accepted for private single-user research under the user-approved reduced acceptance scope (2026-09-06). M3's single seven-day acquisition and 75-score acceptance passed; M4 reads persisted scores; M5 provides the private dashboard. Automated verification and the agent-led practical review passed. Narrator, native 400% zoom, physical touch and human timed/comprehension testing remain explicitly deferred, not passed; full accessibility conformance is not established. Commercial sharing/redistribution requires a separate rights review. The acceptance revision and evidence are recorded below.
 
 Read first: [AGENTS.md](../../../AGENTS.md), [ARCHITECTURE.md](../../../ARCHITECTURE.md), [../../product/product-spec.md](../../product/product-spec.md), [../../design/domain-model.md](../../design/domain-model.md), [../../design/data-pipeline.md](../../design/data-pipeline.md), [../../design/scoring-model.md](../../design/scoring-model.md), [../../engineering/data-sources.md](../../engineering/data-sources.md), [../../engineering/testing-strategy.md](../../engineering/testing-strategy.md).
 
@@ -949,20 +949,289 @@ sharing, commits and pushes are outside this task. No contract question remains.
 
 ### M5 — Ranking dashboard
 
-- TanStack Router route for rankings
-- TanStack Query poll or fetch
-- shadcn/ui table: asset, scores, quality, as-of, model version
-- No chart library in this slice; selecting one remains **Unresolved**
+#### Authorized implementation — 2026-09-06
+
+The user approved the detailed M5 plan in this task. Implement the private ranking
+workspace at `/`, preserving the warm new-york/Radix shell and `/about`. Read M4
+persisted batches only. No backend expansion, acquisition, recalculation, backfill,
+scheduling, charts, watchlists, alerts, trading, deployment, commits or pushes.
+Preserve retained databases and all immutable model/observation semantics.
+
+- [x] Capture protected hashes and measure the unchanged production shell.
+- [x] Exact string URL state, generated validation, decimal-safe presentation and sorting.
+- [x] Comfortable comparison table, selection form, complete request-state handling.
+- [x] Batch/model provenance and accessible below-table asset details.
+- [x] Automated contract, unit, browser, accessibility, visual and production performance checks.
+- [ ] Deferred by the user-approved acceptance revision below: Narrator/Edge, actual 400% browser zoom, physical touch and private-user timed/comprehension testing. These are not blocking gates for this private-use acceptance.
+- [x] Complete the agent-led practical workflow review and record reduced private-use acceptance.
+- [x] Record actual evidence, limitations and preservation; stop after M5 implementation.
+
+Approved design: existing max-w-5xl shell; 38rem minimum semantic table with
+contained horizontal scrolling; 64px minimum comfortable rows; 44px controls.
+Keep rank, asset/status, composite and quality visible. Category, confidence and
+quality detail lives below the table; exact hashes use labelled disclosures.
+Preserve API rank during composite/quality sorting and provide a model-order reset.
+Cache exact six-place strings; use integer millionths and ties-to-even display
+rounding. Show six places when rounding would falsely imply zero or 100%.
+Inapplicable category quality zero is a placeholder, never a coverage assessment.
+Keep model, as-of, knowledge cutoff, retrieval and reconstruction meaning visible;
+creation and fixed age-at-retrieval remain separately labelled in batch details.
+
+URL state is modelId, optional exact-hour asOfUtc, and UI-only sort. Reuse generated
+request schemas, add strict UI search validation and year/future checks, and retain
+scalar strings/duplicate arrays in a generic Router parser. Drafts never fetch;
+submissions push history, sorting replaces history, and changed selections never
+display previous-query data. No discovery endpoints, fabricated dates or fallback.
+
+Rankings-only Query overrides: refetchOnMount=false, refetchOnWindowFocus=false,
+refetchOnReconnect=false, retry=false. These implement the selected manual refresh
+policy and immediate actionable errors. All global and other Query defaults stay
+unchanged. Already-requested offline work may resume; cancellation prevents it.
+One feature consumer owns the full validated response; no loader, prefetch, polling,
+duplicate server cache or per-row requests. Same-query refresh retains verified
+data with truthful failure labels; 403 suppresses even previously displayed data.
+Selection/request coherence is checked after generated response validation.
+
+Reuse local shadcn 4.21.0 previews and @shadcn. Adapt upstream cn/Lucide imports to
+existing utilities/react-icons, preserve Radix 1.6.7 and all existing pins. Only new
+package: development @axe-core/playwright 4.13.0 with axe-core locked at 4.13.0.
+Official references were consulted during planning and rechecked for implementation:
+[Query defaults](https://tanstack.com/query/latest/docs/framework/react/guides/important-defaults),
+[Table v9 sorting](https://tanstack.com/table/latest/docs/framework/react/guide/sorting),
+[Router serialization](https://tanstack.com/router/latest/docs/guide/custom-search-param-serialization),
+[WCAG 2.2](https://www.w3.org/TR/WCAG22/),
+[Playwright accessibility](https://playwright.dev/docs/accessibility-testing).
+
+Verification targets: WCAG 2.2 AA plus 44px controls; keyboard/Narrator, 200% text,
+400% zoom/reflow at 320 CSS px, touch emulation, reduced motion and forced colors.
+Fixed synthetic browser fixtures only. Production lab: pinned Playwright Linux
+image, 4 CPUs/4GiB, one worker, 20 cold runs/profile and 20 warm repetitions/action;
+desktop 1440x1000, 20ms/10Mbps/5Mbps; narrow 390x844, 4x CPU, 150ms/1.6Mbps/750Kbps.
+API fixture delay 200ms. Targets: p75 LCP <=2.5s, usable rows <=3s, CLS <=0.1;
+p95 interaction <=200ms, feedback/response-to-render <=100ms; incremental gzip
+JS <=100KiB and CSS <=8KiB. These are targets, not observed results or field CWV.
+Record manual/user task gates unavailable rather than claiming conformance.
+
+#### M5 implementation and verification — 2026-09-06
+
+The root page now renders one validated persisted envelope. Draft selection and
+URL state are separate, details follow canonical identity, and sorting leaves the
+API's ranks untouched. All six feature-state counts, model versions, snapshot IDs
+and hashes remain inspectable. The generic table gained optional presentation
+metadata/container props; existing nonfinancial tests retain their defaults.
+`stripSearchParams` removes generated default sort values, following the
+[official Router middleware documentation](https://tanstack.com/router/latest/docs/api/router/stripSearchParamsFunction).
+The existing application/Query ownership and automatic route splitting remain.
+
+Repeated local shadcn CLI info/docs/dry-run/source review at implementation time.
+Materialized only the nine reviewed official registry source files, adapting
+`cn` and `lucide-react` imports to local utilities and named React Icons. This
+source-only step avoided the preview's inappropriate extra dependencies; no
+existing primitive was overwritten with an upstream copy. Added reusable touch
+size, semantic status/error tokens, solid focus outlines and wrapping for enlarged
+text. The shared test setup additionally stubs jsdom's absent ResizeObserver for
+Radix radio geometry; the browser engines verify real layout. The nine reviewed
+PNG baselines are test artifacts alongside the planned visual spec. These two
+necessary verification additions extend the plan's file inventory.
+
+**Passed automated checks:** generated OpenAPI/client drift (17 files), strict
+Query/Router lint, **97 unit tests**, TypeScript, pinned production build and module
+inspection. The final four production browser projects pass **99 cases** with
+zero failures/retries; **13 intentional skips** are duplicate visual baselines in
+other projects (9), touch in non-touch projects (3), and unsupported WebKit forced
+colors (1). The development inspector suite passes its one shared-cache/route
+case. Final screenshot comparison passes all nine images across 1440/390/320px.
+Current evidence is retained under `.artifacts/m5-implementation-20260906/`.
+
+The four engines/projects pass keyboard opening/closing, focus restoration,
+cancel/refresh focus, 44px visible controls, 200% text plus WCAG spacing at 320 CSS
+px, and page reflow outside the horizontal table. Narrow landscape/reduced motion
+and supported forced colors pass. Chromium touch emulation passes, with no claim
+of physical-device validation. Screenshots were inspected for table ends,
+readable qualifications, numeric alignment and wrapping of full provenance.
+
+All **28 axe scans** (seven states in four projects) report zero A/AA violations.
+Three open-detail scans have color-contrast incompletes from alpha-OKLab hover
+background parsing, short rank text and horizontally clipped table elements.
+Their nodes were reviewed against both table ends and an additional rendered
+color check, repeated successfully in all four projects. Browser canvas resolves
+the actual colors including alpha over the white table surface. Tested text
+ratios range from **6.51:1 to 15.32:1**; input/radio borders measure **4.79:1**, and
+teal focus/control contrast is **9.18:1**. These resolve those specific automated
+incompletes; they do not establish overall WCAG conformance.
+
+The approved isolated M4 verifier also passes: **39 database assertions**, 20
+read-only transactions, actual API/OpenAPI/generated-client agreement, private
+host/origin boundaries, database cancellation, Redis independence and production
+default denial. Report `.artifacts/analysis-m4-check-0d2cdde70449.json` records
+successful cleanup of only its task-owned containers/networks/disposable volume.
+No private acquisition verifier or provider request was run.
+
+Earlier failures were corrected, not waived: route component lint placement;
+missing jsdom ResizeObserver and a duplicate-text test assertion; missing Node
+JSON import attributes in browser fixture loading; default sort serialization;
+focus lost when changing detail state; enlarged-text overflow in long words and
+status badges; a touch-size selector that included hidden Radix inputs; and a
+Playwright click waiting on an intentionally aria-disabled refresh control.
+The last case now uses keyboard activation to verify the overlap guard. The
+Windows bind-mounted unit run also hit a timeout/OOM while the missing browser
+API caused repeated error-boundary failures; the corrected copied-image run
+passes. The existing Router CLI circular-import warning remains non-blocking.
+
+**Preservation:** 176 of the 200 starting tracked files retain their exact hashes;
+24 intentional existing-file changes are frontend integration/verification and
+the four specified documents. Protected backend, adapters, scoring manifests,
+observation semantics, migrations, OpenAPI/generated transport, route tree,
+Compose and image pins are unchanged. All **710 pre-existing lock entries** and
+application pins are unchanged; only `@axe-core/playwright` and `axe-core`, both
+4.13.0, were added. Pinned Windows npm ci restored host-native dependencies after
+Linux verification and reports zero audit vulnerabilities. Retained databases
+were neither opened nor mounted. No deployment, commit or push was performed.
+
+**Unavailable manual gates at the implementation handoff:** Windows Narrator with Edge,
+actual 400% browser zoom, physical touch-device testing and the private-user timed
+tasks. Host reports Windows NT **10.0.26200.0**; installed Edge file version is
+**152.0.4191.66**, but it was not used for a Narrator session. Automated keyboard,
+320px reflow and touch emulation are recorded separately and do not substitute
+for these checks. No human task timings or comprehension outcomes were measured.
+Original outstanding targets: highest API-ranked usable asset within 10s; model/as-of/cutoff
+within 20s; partial/not-ready and inapplicable/zero explanations without semantic
+errors within 30s each; exact-hour/absent-batch recovery within 60s; exact score and
+category details within 30s; sort/reset/refresh without losing asset identity.
+The original plan required repeating the core tasks with keyboard and narrow
+layout. At that handoff, implementation was delivered and the overall slice was
+not yet accepted. The subsequent user-approved revision below supersedes those
+manual checks as blocking gates; their unmeasured status remains unchanged.
+
+#### M5 production lab results and evidence
+
+Passed both profiles on the pinned Playwright 1.63.0 Linux image with Chromium
+**1243 / 153.0.8010.12**, one worker, four-CPU quota and 4GiB memory. Host CPU:
+**AMD Ryzen 7 5700X 8-Core Processor**; container kernel:
+**6.18.33.2-microsoft-standard-WSL2**; Node **24.20.0**, npm **11.19.0**.
+Each profile has 20 cold navigations (10 latest, 10 direct exact for M5) and 20
+warm repetitions each of input, submission, composite sort, quality sort, detail
+open/close and refresh. Both read actions also record response-to-render timing.
+The API delay is 200ms, with the approved latency/bandwidth and narrow 4x CPU
+shaping. Runs use real loopback HTTP, not intercepted Playwright responses.
+
+| Measurement | Unchanged M4 desktop / narrow | M5 desktop / narrow | Gate |
+| --- | --- | --- | --- |
+| Lab LCP p75 | 208 / 1200ms | 472 / 1480ms | <=2500ms |
+| Usable result p75 (M4: shell only) | 223 / 1204.2ms | 472.3 / 1743.7ms | <=3000ms |
+| Maximum navigation CLS | 0 / 0 | 0.0000592 / 0.000591 | <=0.1 |
+| Input p95 | Not applicable | 28.6 / 19.9ms | <=200ms |
+| Composite / quality sort p95 | Not applicable | 31.1 / 31.2ms desktop; 30.1 / 30.4ms narrow | <=200ms |
+| Detail open / close p95 | Not applicable | 31.3 / 31.2ms desktop; 33.1 / 30.0ms narrow | <=200ms |
+| Submit / refresh visible feedback p95 | Not applicable | 47.9 / 31.2ms desktop; 47.1 / 30.5ms narrow | <=100ms |
+| Response completion to rendered update p95 | Not applicable | 21.5 / 37.3ms | <=100ms |
+| Transferred gzipped application JS | 123761 bytes | 167096 bytes (+43335; 42.32KiB) | Increment <=100KiB |
+| Transferred gzipped CSS | 4613 bytes | 7053 bytes (+2440; 2.38KiB) | Increment <=8KiB |
+
+No duplicate cold reads, third-party requests, per-row requests or polling were
+observed; browser state tests separately check warm cache/remount/focus/reconnect
+behavior. Each sample retains long-task durations and transfer sizes. Full
+Chromium timeline traces are stored as `baseline-*-trace.json.gz` and
+`rankings-*-trace.json.gz`. Emitted chunks retain the lazy ranking page and thin
+route entries. The production guard inspected 233 rendered modules with no
+fixtures, axe, runners, CLI or development inspectors. Measurements are lab
+evidence only; no field INP/Core Web Vitals or predictive-performance claim.
+
+| Evidence file (relative to repository) | SHA-256 |
+| --- | --- |
+| `.artifacts/m5-implementation-20260906/baseline.json` | `F9D38F506450B7479123CB77F6BC43AEEFAEAD9333C7674DE8216D1D888C2F9F` |
+| `.artifacts/m5-implementation-20260906/unit-final.json` | `3CBE80C9691ED91C94ACD4FAB3DBBCE7124504781CDB576B0506471B66B238CD` |
+| `.artifacts/m5-implementation-20260906/browser-final.json` | `50B209A9AEB7A5177522661EF859C65CF65CC9A927861C23651007B5646BE2CB` |
+| `.artifacts/m5-implementation-20260906/development.json` | `1C696442B5F4399ABA9C29B8AADAF308EEA9B4409787EF46419E5D3CEA727531` |
+| `.artifacts/m5-implementation-20260906/contrast-review.json` | `7CA858E009AB52826D7BB9790C3D8D58553B1C15B12D22632F82167679439D52` |
+| `.artifacts/m5-implementation-20260906/baseline-desktop.json` | `BAC26F67ECAB7B3E2ADB680EE100B8457BB356371EECEE4DA1BE9D8477C2862B` |
+| `.artifacts/m5-implementation-20260906/baseline-narrow.json` | `F57530605E49D40A86F9C44DED45FD06F74095A49F436B583EA8B3C6013D75A5` |
+| `.artifacts/m5-implementation-20260906/rankings-desktop.json` | `E51E09B486EC51D44B1C36FAC975B53E017BE3ED92356E1E9D542A7E38E7348B` |
+| `.artifacts/m5-implementation-20260906/rankings-narrow.json` | `AB0DED4A987F5571B6AAB0DDAFBD63CEEA7381878BD4D738E44DA42A43AF9266` |
+| `.artifacts/m5-implementation-20260906/preservation.json` | `BD57252BEE77FD662AA7A904ED5F73E2C11BB77FCAE8271986898770F3C9CD53` |
+| `frontend/package-lock.json` | `8B92FB0A0D7CF787B6F9F220CDEE0D9A2BF995EB1A54F42BB32A10E24B55531B` |
+| `.artifacts/analysis-m4-check-0d2cdde70449.json` | `E2EC5555469C3DD832E6FDFEB716A328664BF704B5E81BDC015BB537B8231B5D` |
+
+Remaining failed checks at the implementation handoff: **none**. Unavailable manual acceptance checks remain
+listed above, with their later deferral recorded below. Ignored raw evidence and local verification images are retained;
+verification servers are stopped. No product decision or backend change was
+needed to implement M5.
+
+#### Reduced private-use acceptance — 2026-09-06
+
+**User decision:** after discussing the remaining manual gates, the user asked
+the agent to carry out the proposed practical check and reduced private-use
+acceptance. This revises acceptance scope; it does not turn unperformed checks
+into passes. Formal human timed/comprehension testing, Narrator with Edge,
+native 400% browser zoom and physical touch testing are deferred and do not block
+this acceptance. Revisit those checks before claiming the corresponding coverage
+or accessibility conformance. No broader product or access scope is approved.
+
+**Practical review passed:** the agent operated the production dashboard through
+the Codex in-app browser on Windows, using a test-only server bound to
+`127.0.0.1:4176`. Responses derive from the M4 synthetic fixture, including
+Complete BTC, Partial ETH and Not ready SOL. No application services, retained
+databases or providers were used. This was an agent-led review, not a human
+usability study; no user task timings or comprehension results are claimed.
+
+| Practical check | Observed result |
+| --- | --- |
+| Latest read and context | Three rows appeared; BTC retained API rank 1, ETH rank 2 and SOL Unranked. Model `slice1-v1`, as-of `2021-01-08 00:00:00.000 UTC`, and distinct cutoff/retrieval labels were visible. |
+| Exact hour and absent-batch recovery | Entered `2021-01-08T00:00:00Z` and submitted with Tab/Enter; displayed context changed to Exact historical hour. `2021-01-07T00:00:00Z` produced the specific absent-batch guidance with no old table. Explicit Use latest stored restored the matching cached latest batch. |
+| Details, sorting and refresh | BTC exact composite `+12.345678` and tiny negative category `-0.000001` were preserved. Composite descending placed ETH before BTC despite identical rounded values; quality descending placed BTC, SOL, ETH without assigning SOL a rank. Reset restored API order. Refresh reported the same batch and retained BTC details. |
+| Status and quality meaning | The table explained Partial can rank and Not ready is unranked. BTC inapplicable category quality displayed Not applicable with the placeholder-zero explanation; ETH missing category retained reported `0.000000` quality and no category score. Heuristic/probability and reconstruction qualifications were visible. This verifies displayed content, not user comprehension. |
+| Keyboard and narrow layout | Tab/Enter opened/closed details and submitted selections. Closing returned focus to the canonical row button with a solid outline and revealed it inside the horizontal table container. The narrow review reached 320 CSS pixels with 305px document content width (scrollbar excluded); expanded quality/provenance content wrapped. Existing 320px/200%-text and text-spacing automated evidence remains applicable. |
+| Request behavior | The first five fixture-server reads map to the reviewed sequence: rejected setup response, corrected latest retry, manual latest refresh, exact-hour read and absent-hour read. Six further reads appeared while the browser remained visible; their initiator was not captured, so the shared session log alone cannot establish request counts for individual controls. Isolated request/cache checks are recorded below. No browser console warnings/errors were reported. |
+
+**Verification and limitations:** the current production build/typecheck passed
+again with pinned Node 24.20.0/npm 11.19.0; the production module guard checked
+233 modules. The earlier 97 unit tests, 99 production browser cases, inspector,
+axe/contrast, M4 compatibility and lab performance evidence is retained. Three
+existing isolated Chromium cases covering sort/detail/refresh requests, exact
+selection/cache/history and offline/focus/reconnect behavior were rerun after
+the shared-session request log proved unsuitable for attributing every read.
+All three passed in 5.5 seconds in the pinned, network-isolated Playwright image.
+The remaining unchanged suites were not rerun for this documentation-only update.
+No application fix was required.
+
+The first temporary fixture setup used PowerShell JSON conversion, which removed
+required timestamp milliseconds. The dashboard rejected it. The fixture server
+was corrected to preserve source strings and validate with the generated schema
+before serving; this was a test-setup failure, not an application regression.
+Native Edge automation did not open because its app-approval request timed out.
+The in-app browser supported the workflow review but did not establish a native
+400% zoom result. These limitations are recorded instead of counted as passes.
+
+Raw synthetic request logs, the corrected fixture, loopback server and acceptance
+report are retained under `.artifacts/m5-acceptance-20260906/`. Backend, generated
+contracts, migrations, Compose/image pins and immutable manifests remain
+unchanged; retained databases were not opened. The temporary server was stopped
+after review. No acquisition, deployment, commit or push was performed.
+
+Preservation verification found no unexpected changes among the 200 tracked
+files captured before M5: 175 are unchanged, and 25 have authorized M5/documentation
+changes (including this acceptance update to the roadmap). The implementation
+lockfile hash and all 24 previously recorded evidence digests still match.
+
+| Acceptance evidence file (relative to repository) | SHA-256 |
+| --- | --- |
+| `.artifacts/m5-acceptance-20260906/acceptance.json` | `6F0A1EBF38E9353FBB0DC0E3AFAD9030865B1A7D9D91791E446A6A834CC9683F` |
+| `.artifacts/m5-acceptance-20260906/requests.jsonl` | `384A96F705AC6F6B970DA58C3BCFE3CCD49BACBCEE6B49B68A1629B5B1D11253` |
+| `.artifacts/m5-acceptance-20260906/request-behavior-recheck.json` | `E29CE2E881888BD62ADF53F31AD0BDE80AF672B5D7D6AEA6F006E4C1664D95C0` |
+
+**Disposition:** M5 and the M1–M5 technical slice are accepted for the existing
+private single-user scope with the explicit deferrals above. This does not
+establish predictive effectiveness, full WCAG conformance or commercial rights.
 
 ## Acceptance checks
 
 - [x] A clean `docker compose up --build` starts frontend, API, worker, PostgreSQL, and Redis, and the repository README documents the command
-- [x] UTC timestamps in API JSON (M1 operational responses verified; future financial endpoints require their own checks)
+- [x] UTC timestamps in API JSON (M1 operational responses and M4 financial contract verified)
 - [x] API precision and unit conventions are documented; exact values use a round-trip-safe wire representation
 - [x] Worker logs correlation of run id (M1 lifecycle and M2/M3 one-shots verified)
-- [x] Rankings API returns three assets even if one category is inapplicable (dashboard remains M5)
+- [x] Rankings API and M5 dashboard retain three assets even if a category is inapplicable or an asset is not ready
 - [x] Historical score rows retain immutable model and exact feature-input lineage; later runs do not replace prior as-of snapshots
-- [ ] Tests from [../../engineering/testing-strategy.md](../../engineering/testing-strategy.md) that apply to M1–M5 pass
+- [x] Applicable automated checks and the practical review pass under the revised private-use scope; deferred manual coverage is explicitly listed above
 
 ## Risks
 
@@ -984,10 +1253,9 @@ sharing, commits and pushes are outside this task. No contract question remains.
 
 ## Recommended next Codex task
 
-The exact next milestone is **M5 — Ranking dashboard**, after separate user
-authorization. Consume M4's generated contract and feature-owned queryOptions;
-preserve Query global defaults, frontend ownership and stored model/as-of/quality/
-applicability semantics. No request-time scoring or extra acquisition is implied.
-Preserve the private single-user boundary; wider rights review belongs before
-sharing or monetization. M5, predictive validation and the overall vertical slice
-remain incomplete. This M4 task stops here.
+Prepare a separate bounded execution plan for roadmap 1A, forward signal
+recording and outcome collection, when requested. Preserve the private single-user
+boundary, stored numerical/provenance semantics and M5 manual refresh policy.
+The deferred manual checks remain visible. No later milestone implementation,
+provider acquisition, recalculation, deployment or sharing is authorized by
+this acceptance decision.

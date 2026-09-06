@@ -122,8 +122,8 @@ DOM Testing Library 10.4.1, jest-dom 7.0.1 and jsdom 30.0.1 tests public
 configuration and the shell with isolated memory histories. Playwright 1.63.0
 tests the production bundle in Chromium, Firefox, WebKit and a narrow Chromium
 viewport, including navigation/history, reload, missing routes and keyboard
-skip-link focus. Fail on runtime errors or external/API requests; the shell has
-no financial requests. Exact compatibility, image pins and verification
+skip-link focus. Fail on runtime errors, external requests and unintended API
+requests; allow only explicitly mocked rankings reads. Exact compatibility, image pins and verification
 are recorded in the active execution plan; commands are in the root README.
 
 The frontend foundation also tests shared typed Router/Query context, cache
@@ -149,7 +149,7 @@ configuration uses port 4174 to open the actual Query/Router inspectors and veri
 route updates; production tests check their absence. Build-time module inspection
 rejects shipped devtools, test or CLI code. Both browser suites own their servers,
 use zero retries and can run non-root in an isolated Docker container without
-external networking. jsdom stubs only unsupported scrolling; keyboard focus and
+external networking. jsdom stubs unsupported scrolling and ResizeObserver; keyboard focus and
 viewport behavior are verified in real browser engines. Full accessibility audits,
 coverage thresholds and CI setup are not established by this foundation.
 
@@ -158,15 +158,47 @@ backend checks. It verifies generated success/problem validation, exact strings,
 integer types, rejected malformed responses, cache identity/full response,
 untouched Query defaults and actual Fetch signal cancellation. The frontend image
 build runs `api:check` before lint/unit/typecheck/production build; synthetic data
-and unused rankings transport never enter the rendered application.
+never enters the rendered application.
 
-The following data-driven checks become applicable in M5 using the generated
-OpenAPI client; do not create parallel transport models:
+M5 adds a generated-contract dashboard test suite. `tests/support/rankings.ts`
+derives synthetic browser responses from the M4 fixture and rejects every
+unmocked API or external request. Unit tests cover strict string URL boundaries,
+calendar/future validation, exact BigInt rounding/comparison, request/response
+coherence, cancellation and unchanged global Query defaults. Browser projects
+exercise history/reload, scalar-looking IDs, zero-request invalid inputs, manual
+refresh, retained-data failures, 403 suppression, absent batches, offline pause/
+cancel/resume, delayed abandoned requests, sorting, details and focus restoration.
+Complete, partial, not-ready, missing and inapplicable states remain distinct.
 
-- Router search params round-trip rankings filters
-- Query polling/error states
-- Components do not invent scores; they render API data
-- Component tests for ranking table empty/loading/error/stale
+Run `npm run test:e2e:run` after the production build. Axe wrapper/engine 4.13.0
+scan seven states for applicable A/AA rules; inspect attached incomplete findings.
+Keyboard workflows, 44px visible controls, 320px reflow with 200% text plus WCAG
+spacing, forced colors, reduced motion and touch emulation supplement scans.
+Snapshots use en-GB, UTC, a fixed clock, light scheme, DPR 1 and pinned Linux
+Chromium at 1440x1000, 390x844 and 320x800, including both table ends and open
+provenance. Review candidates before accepting them. Native Windows Narrator
+with Edge, actual 400% browser zoom, physical touch-device checks and human timed/
+comprehension tasks remain separate coverage. The user-approved M5 acceptance
+revision of 2026-09-06 defers these checks for private single-user use, after the
+agent-led practical workflow review. Record them as deferred, not passed; neither
+automation nor agent review substitutes for human usability evidence or establishes
+full accessibility conformance. The active plan records the bounded acceptance.
+
+`npm run test:performance` serves production assets and real loopback HTTP with
+200ms synthetic API delay. Use the pinned Playwright image, network isolation,
+four CPUs/4GiB, one worker, 20 cold navigations per profile (latest/exact alternated)
+and 20 repetitions per warm action. CDP shapes CPU/network, browser performance
+observers capture LCP/CLS/long tasks and resource sizes, and timeline traces remain
+local. Interaction timing starts at the browser event and ends after the required
+DOM update has had a paint opportunity; Playwright actionability waits are excluded.
+Compare gzip transfers to the unchanged M4 production image baseline. Record raw
+results, failures, environment and unavailable gates in the active plan. This
+protocol does not measure field INP or prove WCAG conformance.
+
+Run the existing isolated `scripts/verify-m4.mjs` for actual API/OpenAPI
+compatibility; its disposable-data ownership and cleanup rules still apply.
+Do not run acquisition verifiers as dashboard checks. Preserve all generated
+contracts, backend code, model manifests, migrations, Compose and image pins.
 
 ### Data-integrity tests
 
