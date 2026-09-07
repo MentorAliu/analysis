@@ -52,7 +52,7 @@ internal static class DatabaseChecks
         await using (var db = factory.CreateDbContext())
         {
             await db.Database.MigrateAsync();
-            Check.Equal(2, (await db.Database.GetAppliedMigrationsAsync()).Count(), "M2 plus additive M3 migration only");
+            Check.Equal(db.Database.GetMigrations().Count(), (await db.Database.GetAppliedMigrationsAsync()).Count(), "All reviewed additive migrations applied");
             Check.That(!db.Database.HasPendingModelChanges(), "Migrated model is current");
         }
         Check.Equal(beforeMigration, await M2HashAsync(factory), "Populated M2 facts/provenance/catalog preserved by upgrade");

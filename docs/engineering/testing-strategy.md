@@ -236,6 +236,23 @@ Every adapter, feature, and migration review should ask:
 
 ## CI expectations
 
+For 1A, `node scripts/verify-1a.mjs` uses the pinned Node runtime and a new isolated
+Compose project with synthetic data and no provider egress. It exercises migration
+upgrade/rollback/reapply, concurrency, publication failure, cancellation/SIGTERM,
+frozen replay, all horizons, repeated revisions, cursor boundaries, aggregates,
+Redis outage, recreation and production-image separation. The package-free
+`Analysis.ForwardChecks` project also runs deterministic arithmetic and loopback
+adapter checks in the backend build. No test clock override exists in production
+commands; the disposable database suite replaces only its own SQL clock function.
+
+`node scripts/verify-1a.mjs --local` is a Windows fallback using exact SDK 10.0.400
+and portable PostgreSQL 18.6 under ignored `.artifacts` paths. It creates a new
+password-protected loopback cluster, runs database/worker/API/restart checks and
+removes its data. This does not establish Linux image or POSIX SIGTERM evidence.
+The [1A plan](../exec-plans/active/forward-signal-recording-and-outcomes.md) distinguishes
+current passes, failures corrected during development and unavailable checks from
+historical M1–M5 acceptance. Preserve the deferred accessibility/human-test scope.
+
 **Proposed:** one CI pipeline runs unit + fixture + scoring goldens on every change; integration + migration tests on PR; contract/drift jobs on a schedule once live providers exist.
 
 Do not skip scoring goldens because a UI screenshot “looks ranked”.

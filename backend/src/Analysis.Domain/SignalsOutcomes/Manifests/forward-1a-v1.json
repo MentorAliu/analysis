@@ -1,0 +1,22 @@
+{
+  "id": "forward-1a-v1",
+  "modelId": "slice1-v1",
+  "universe": ["bitcoin", "ethereum", "solana"],
+  "horizonHours": [1, 4, 24, 168],
+  "primaryHorizonHours": 24,
+  "issuanceGraceMinutes": 15,
+  "inputLookbackHours": 120,
+  "decimalPlaces": 18,
+  "midpoint": "ToEven",
+  "policies": {
+    "issuance": "Current UTC hour only; system K and database seal I; atomic fresh M3 bundle plus ledger. No standalone-batch conversion. Unique model/T; duplicates return original. T<=K<=creation<=I<=T+15min.",
+    "ranking": "M3 complete/partial readiness, including negative scores. Composite descending then canonical id ordinal ascending; unique sequential ranks. Retain all three, including all-not-ready.",
+    "reference": "Binance spot 1h UTC USDT klines. E is first UTC hour strictly after I; reference close ends E. Disclose E-I; not execution or exact issuance-time returns.",
+    "outcome": "M=E+H; return round18(close(M)/close(E)-1), ToEven. Require all H+1 closed candles including reference. Fraction returns; USDT prices, no USD parity. No interpolation, substitute, fees, funding, slippage, direction flip, compounding or MFE/MAE.",
+    "missing": "Before M pending; matured gaps/invalid facts incomplete. No expiry. Late first facts may complete later; preserve every distinct evidence state. Conflicts do not auto-resolve. Preserve first completed measurement and append later conflict state.",
+    "benchmarks": "BTC return over identical E-M. RS ordering uses frozen M3 feature 5: round18((1+asset24h)/(1+btc24h)-1), eligible assets only, descending then ordinal id. Missing issuance inputs never reconstructed later.",
+    "aggregation": "Explicit issued-time interval, all records. Paired samples require original RS ordering and complete undisputed paths for all three assets. Equal issuance arithmetic means and simple differences; rank means from individually complete eligible rows. Partition model/hash, methodology/hash, horizon, eligible set and original quality composition. Null empty means; disclose counts/exclusions. No independent-sample, predictive or probability claims.",
+    "collection": "Manual private-use XK commands, no normal-worker acquisition. Inputs last120h, candle end T exclusive, scalar end T+1ms exclusive. Outcome candle windows <=7d, only needed intervals. Existing fixed origins and finite transport budgets.",
+    "numeric": "Checked decimal operations, each division and completed result rounded18 ToEven. Original prices exact; unsupported outcome arithmetic ranges are incomplete, never zero. Exact integer aggregate reduction rounded18 ToEven; unrepresentable aggregate is null with numeric-range issue and unchanged denominator. Stable ordinal reduction order."
+  }
+}

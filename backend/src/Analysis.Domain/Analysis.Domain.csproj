@@ -4,5 +4,7 @@
     <!-- Exact calculator source is hashed at runtime; no source files are published separately. -->
     <EmbeddedResource Include="Scoring/*.cs" />
     <EmbeddedResource Include="Observation.cs;Catalog.cs" />
+    <EmbeddedResource Include="SignalsOutcomes/Manifests/*.json" />
+    <EmbeddedResource Include="SignalsOutcomes/*.cs" LogicalName="Analysis.Domain.SignalsOutcomes.%(Filename).source" />
   </ItemGroup>
 </Project>

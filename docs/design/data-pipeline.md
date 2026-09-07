@@ -111,7 +111,27 @@ Signal detection reads those scores (and optional event rules) and writes `Signa
 
 ## Historical outcome calculation
 
-A later job, once the horizon has elapsed, attaches returns and MFE/MAE to signals or scored snapshots.
+**Implemented 1A forward path:** manual input collection reads the last 120h,
+excluding candles not closed at T while including scalar events exactly at T.
+Issuance must seal by T+15 minutes; it cannot issue an existing standalone batch.
+Outcome acquisition reads only Binance spot intervals needed by stored targets,
+inside an explicit closed UTC window of at most seven days. Measurement performs
+no provider I/O and handles at most 24 issuances per call with an explicit cursor.
+Inspection reads every issuance in its bounded interval, including all prior
+assessment states; it does not aggregate one page as if it were the entire sample.
+
+The reference candle ends at E strictly after issuance; maturity is E+H and all
+H+1 candles must exist. Mature missing observations stay incomplete and retryable;
+late first observations may complete them. Forward persistence commits unrelated
+valid facts alongside immutable rejected-candidate evidence. Every distinct outcome
+evidence set appends once. Later revisions preserve the first completed prices and
+return; a new candidate for an already disputed candle is still new evidence.
+Legacy M2 persistence behavior remains unchanged. See the
+[1A plan](../exec-plans/active/forward-signal-recording-and-outcomes.md) for clocks,
+precision, conflict lineage, retries, transaction boundaries and frozen benchmarks.
+
+**Future extension beyond 1A:** additional horizons and MFE/MAE need another
+bounded specification before attachment to signals or scored snapshots.
 
 - Use the same price series definition for all horizons (document the series: for example, canonical spot close).
 - Do not peek at future data when reproducing a score; outcomes are separate writes.
@@ -154,7 +174,7 @@ A bug fix that changes a feature or score result creates a new calculation/model
 
 ## Unresolved
 
-- Exact cadence intervals and retention.
-- Whether all raw payloads are stored or only hashed/sampled.
-- Price series used for outcome returns (which venue, which index).
-- Batch size and parallelism once a vendor is chosen.
+- Continuous cadences and broader retention; 1A uses explicit manual bounded runs and keeps incomplete records.
+- Payload-retention changes beyond the existing M2/1A raw-payload lineage.
+- Outcome series beyond 1A's frozen Binance spot hourly USDT closes.
+- Broader ingestion batch sizing/parallelism; 1A measurement is bounded at 24 issuances per invocation.

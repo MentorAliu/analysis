@@ -148,7 +148,24 @@ An immutable identifier for the code + configuration that turned features into c
 
 ## Signal outcome
 
-Forward-looking measurement attached to a signal or scored snapshot after enough time has elapsed:
+**Implemented 1A subset:** `ForwardOriginal` is a separate `forward-issued-ranking`
+record, atomically linked to a fresh M3 batch that keeps its `research-reconstruction`
+label. It freezes the model and methodology hashes, source digests, input hash,
+three original rows, exact snapshot references, quality, eligible set, instruments
+and benchmark ordering. As-of T, cutoff K, creation and database sealing I are
+distinct. Reference E is the first hour strictly after I; its delay is explicit in
+milliseconds. A duplicate model/T returns this original record.
+
+Each issuance has twelve `OutcomeTarget` records: three assets times 1/4/24/168h.
+Append-only assessments contain state, assessed/cutoff times, exact input/payload
+links, missing and invalid keys, conflict and revision evidence, and fraction
+returns in USDT. Rejected revision candidates retain their payload, mapping and
+original fact. Later disputes point to the first completed assessment and preserve
+its prices and result. The [1A plan](../exec-plans/active/forward-signal-recording-and-outcomes.md)
+fixes maturity, complete-path and benchmark rules; outcomes never feed scores.
+
+**Broader product target, beyond the implemented 1A subset:** measurements attached
+to a signal or scored snapshot after enough time has elapsed:
 
 - Simple returns at 1h, 4h, 1d, 3d, 7d, 14d, 30d
 - Maximum favorable excursion

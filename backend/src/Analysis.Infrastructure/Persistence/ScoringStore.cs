@@ -14,6 +14,14 @@ public sealed class ScoringStore(IDbContextFactory<ResearchDbContext> factory) :
         await using var db = await factory.CreateDbContextAsync(cancellationToken);
         await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.RepeatableRead, cancellationToken);
         await db.Database.ExecuteSqlRawAsync("SET TRANSACTION READ ONLY", cancellationToken);
+        var input = await CaptureInTransactionAsync(db, request, model, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return input;
+    }
+
+    internal static async Task<ScoringInput> CaptureInTransactionAsync(ResearchDbContext db, ScoreRequest request,
+        ScoringModel model, CancellationToken cancellationToken)
+    {
         await PreconditionsAsync(db, cancellationToken);
         var m = model.Manifest;
         var lookback = m.Features.Max(f => f.Operation switch
@@ -43,7 +51,6 @@ public sealed class ScoringStore(IDbContextFactory<ResearchDbContext> factory) :
             instruments.OrderBy(i => i.Id, StringComparer.Ordinal).ToArray(), facts,
             conflicts.OrderBy(q => q.Id, StringComparer.Ordinal).Select(q => new ConflictFact(q.Id, q.InstrumentId,
                 q.WindowStartUtc, q.WindowEndUtc, q.IngestedAtUtc, q.Code)).ToArray());
-        await transaction.CommitAsync(cancellationToken);
         return input;
     }
 
@@ -67,13 +74,22 @@ public sealed class ScoringStore(IDbContextFactory<ResearchDbContext> factory) :
     public async Task<StoredScoringBatch> PublishAsync(ScoringBundle bundle, ScoringModel model,
         DateTimeOffset createdAtUtc, CancellationToken cancellationToken)
     {
+        await using var db = await factory.CreateDbContextAsync(cancellationToken);
+        await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
+        var result = await PublishInTransactionAsync(db, bundle, model, createdAtUtc, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return result;
+    }
+
+    internal static async Task<StoredScoringBatch> PublishInTransactionAsync(ResearchDbContext db,
+        ScoringBundle bundle, ScoringModel model, DateTimeOffset createdAtUtc, CancellationToken cancellationToken)
+    {
+        if (db.Database.CurrentTransaction is null) throw new InvalidOperationException("Scoring publication requires an owning transaction.");
         var m = model.Manifest; Utc.Require(createdAtUtc);
         if (createdAtUtc < bundle.Input.KnowledgeCutoffUtc || CanonicalJson.Write(ScoringJobs.Calculate(bundle.Input, model)) != CanonicalJson.Write(bundle))
             throw new ArgumentException("Invalid scoring bundle.");
         var inputJson = CanonicalJson.Write(bundle.Input); var inputHash = CanonicalJson.Hash(inputJson);
         var id = CanonicalJson.Hash(CanonicalJson.Write(new { m.ModelId, bundle.Input.AsOfUtc, bundle.Input.KnowledgeCutoffUtc }));
-        await using var db = await factory.CreateDbContextAsync(cancellationToken);
-        await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
         await db.Database.ExecuteSqlAsync($"SELECT pg_advisory_xact_lock(hashtextextended({"m3-model:" + m.ModelId}, 0))", cancellationToken);
         await db.Database.ExecuteSqlAsync($"SELECT pg_advisory_xact_lock(hashtextextended({LockKey(m.ModelId, bundle.Input.AsOfUtc)}, 0))", cancellationToken);
         var known = await db.Set<ScoringModelRow>().SingleOrDefaultAsync(v => v.Id == m.ModelId, cancellationToken);
@@ -84,7 +100,6 @@ public sealed class ScoringStore(IDbContextFactory<ResearchDbContext> factory) :
         {
             if (existing.KnowledgeCutoffUtc != bundle.Input.KnowledgeCutoffUtc) throw new ScoringPreconditionException("input-cutoff-conflict");
             var winner = await MaterializeAsync(db, existing, true, cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
             return winner;
         }
         await VerifySourceFactsAsync(db, bundle.Input, cancellationToken);
@@ -126,7 +141,6 @@ public sealed class ScoringStore(IDbContextFactory<ResearchDbContext> factory) :
                 ApplicableWeight = category.ApplicableWeight, AvailableWeight = category.AvailableWeight });
         }
         await db.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
         return new(id, m.ModelId, model.Hash, model.SourceHash, bundle, false);
     }
 
@@ -141,7 +155,7 @@ public sealed class ScoringStore(IDbContextFactory<ResearchDbContext> factory) :
         return results.ToArray();
     }
 
-    private static async Task<StoredScoringBatch> MaterializeAsync(ResearchDbContext db, ScoringBatchRow batch,
+    internal static async Task<StoredScoringBatch> MaterializeAsync(ResearchDbContext db, ScoringBatchRow batch,
         bool duplicate, CancellationToken cancellationToken)
     {
         var model = await db.Set<ScoringModelRow>().AsNoTracking().SingleAsync(m => m.Id == batch.ModelId, cancellationToken);
@@ -194,7 +208,7 @@ public sealed class ScoringStore(IDbContextFactory<ResearchDbContext> factory) :
         return new(batch.Id, batch.ModelId, model.ManifestHash, model.SourceHash, new(input, calculations.ToArray()), duplicate);
     }
 
-    private static async Task VerifySourceFactsAsync(ResearchDbContext db, ScoringInput input, CancellationToken cancellationToken)
+    internal static async Task VerifySourceFactsAsync(ResearchDbContext db, ScoringInput input, CancellationToken cancellationToken)
     {
         var payloadIds = input.Observations.Select(f => f.PayloadId).Distinct().ToArray();
         var payloads = await db.Payloads.AsNoTracking().Where(p => payloadIds.Contains(p.Id)).ToArrayAsync(cancellationToken);

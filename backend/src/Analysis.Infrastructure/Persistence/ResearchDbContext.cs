@@ -17,6 +17,7 @@ public sealed class ResearchDbContext(DbContextOptions<ResearchDbContext> option
     {
         model.HasDefaultSchema("research");
         ScoringSchema.Configure(model);
+        ForwardSchema.Configure(model);
         model.Entity<Asset>(e =>
         {
             e.ToTable("Assets"); e.HasKey(x => x.Id);

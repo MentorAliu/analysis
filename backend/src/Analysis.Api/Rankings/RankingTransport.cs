@@ -23,8 +23,7 @@ public static class RankingTransport
         var manifest = batch.Manifest;
         Require(batch.AsOfUtc <= now && batch.AsOfUtc <= batch.KnowledgeCutoffUtc && batch.KnowledgeCutoffUtc <= batch.CreatedAtUtc);
         var rank = 0;
-        var items = batch.Items.OrderBy(i => i.Score.Composite is null)
-            .ThenByDescending(i => i.Score.Composite).ThenBy(i => i.Asset.Id, StringComparer.Ordinal).Select(i =>
+        var items = RankingOrder.Sort(batch.Items, i => i.Score.Composite, i => i.Asset.Id).Select(i =>
             {
                 var s = i.Score;
                 var state = s.State switch { "complete" => RankingState.complete, "partial" => RankingState.partial,

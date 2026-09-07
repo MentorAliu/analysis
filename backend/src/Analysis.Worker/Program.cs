@@ -23,7 +23,14 @@ if (scoringCommand && !ScoringCommand.TryParse(args, DateTimeOffset.UtcNow, out 
     Console.Error.WriteLine($"Invalid M3 command. Usage: {ScoringCommand.Usage}");
     return 2;
 }
-var builder = WebApplication.CreateBuilder(maintenance || ingestOnce || scoringCommand ? [] : args);
+ForwardCommand? forward = null;
+var forwardCommand = args.Length > 0 && ForwardCommand.Operations.Contains(args[0], StringComparer.Ordinal);
+if (forwardCommand && !ForwardCommand.TryParse(args, out forward))
+{
+    Console.Error.WriteLine($"Invalid 1A command. Usage: {ForwardCommand.Usage}");
+    return 2;
+}
+var builder = WebApplication.CreateBuilder(maintenance || ingestOnce || scoringCommand || forwardCommand ? [] : args);
 builder.AddOperations();
 builder.Services.AddResearchPersistence();
 builder.Services.AddSingleton<WorkerHeartbeat>();
@@ -31,7 +38,7 @@ builder.Services.AddHostedService<LifecycleWorker>();
 builder.Services.AddHealthChecks().AddCheck<WorkerHeartbeat>("worker-loop", tags: ["live", "ready"]);
 
 var app = builder.Build();
-if (maintenance || ingestOnce || scoringCommand)
+if (maintenance || ingestOnce || scoringCommand || forwardCommand)
 {
     using var cancellation = new CancellationTokenSource();
     cancellation.CancelAfter(TimeSpan.FromMinutes(5));
@@ -43,6 +50,8 @@ if (maintenance || ingestOnce || scoringCommand)
     using var scope = app.Logger.BeginScope(new Dictionary<string, object> { ["RunId"] = runId, ["CorrelationId"] = runId });
     try
     {
+        if (forward is not null)
+            return await ForwardOperation.RunAsync(app, forward, runId, cancellation.Token);
         if (ingestion is not null)
             return await PrivateIngestion.RunAsync(app, ingestion, runId, cancellation.Token);
         if (scoring is not null)
@@ -59,14 +68,24 @@ if (maintenance || ingestOnce || scoringCommand)
         app.Logger.LogError("M3 precondition failed: {Code}", error.Message);
         return 2;
     }
+    catch (ForwardPreconditionException error)
+    {
+        app.Logger.LogError("1A precondition failed: {Code}", error.Message);
+        return 2;
+    }
+    catch (ArgumentException) when (forwardCommand)
+    {
+        app.Logger.LogError("1A clock or input precondition failed");
+        return 2;
+    }
     catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
     {
-        app.Logger.LogInformation("{Milestone} one-shot operation cancelled or its five-minute deadline elapsed", scoringCommand ? "M3" : "M2");
+        app.Logger.LogInformation("{Milestone} one-shot operation cancelled or its five-minute deadline elapsed", forwardCommand ? "1A" : scoringCommand ? "M3" : "M2");
         return 130;
     }
     catch (Exception error)
     {
-        app.Logger.LogError("{Milestone} one-shot operation failed: {ErrorType}; no exception payload logged", scoringCommand ? "M3" : "M2", error.GetType().Name);
+        app.Logger.LogError("{Milestone} one-shot operation failed: {ErrorType}; no exception payload logged", forwardCommand ? "1A" : scoringCommand ? "M3" : "M2", error.GetType().Name);
         return 1;
     }
     finally

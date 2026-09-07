@@ -11,5 +11,6 @@
     <Project Path="tests/Analysis.OperationalChecks/Analysis.OperationalChecks.csproj" />
     <Project Path="tests/Analysis.ScoringChecks/Analysis.ScoringChecks.csproj" />
     <Project Path="tests/Analysis.RankingsChecks/Analysis.RankingsChecks.csproj" />
+    <Project Path="tests/Analysis.ForwardChecks/Analysis.ForwardChecks.csproj" />
   </Folder>
 </Solution>

@@ -1,6 +1,6 @@
 # Product roadmap
 
-**Updated:** 2026-09-06.
+**Updated:** 2026-09-07.
 
 **Status:** Requirement for product sequencing and promotion gates. Feature designs marked **Proposed** remain subject to a subsequent execution plan; **Future** items are conditional. Inclusion is not evidence of implementation, predictive performance, or customer demand.
 
@@ -17,7 +17,7 @@ Priorities follow the [feature research](../research/feature-research-2026-09-05
 | Order | Roadmap item | Status | Exit or promotion gate |
 | --- | --- | --- | --- |
 | 0 | BTC/ETH/SOL technical ranking slice | Accepted for private single-user research under reduced acceptance scope, 2026-09-06 | M1–M5 implementation, automated verification and practical dashboard review passed. Narrator, native 400% zoom, physical touch and human timed/comprehension testing remain deferred in the active plan. M3's 75 reconstructed scores establish replay/persistence correctness, not predictive effectiveness. Review wider data rights before sharing/monetization. |
-| 1A | Forward signal recording and outcome collection | Proposed; first work after the slice | Reproducible original records, predefined outcome conventions and benchmarks, and passing integrity checks. |
+| 1A | Forward signal recording and outcome collection | Implemented and verified for manual bounded operation; live activation inactive | Frozen conventions and passing automated integrity/Compose regression evidence in the [1A plan](../exec-plans/active/forward-signal-recording-and-outcomes.md). No forward market results claimed. |
 | 1B | Asset detail with precise change explanations | Requirement for the planned explanation workflow; after the slice | Correctly distinguish asset, peer/universe, model and data-quality changes. |
 | 2 | Saved research thesis monitor | Proposed; first customer-facing paid-workflow experiment | Correct reviews, useful repeat usage and evidence of paid renewal under a predefined pilot protocol. |
 | 3 | Forward signal record with benchmark comparisons | Proposed; display as observation horizons mature | Complete and incomplete results remain visible; aggregates disclose sample, coverage and model version. |
@@ -34,9 +34,9 @@ Outcome jobs, asset-detail expansion, saved theses, alerts and customer identity
 
 ## 1A — Preserve original signals and collect outcomes
 
-**Proposed:** extend existing immutable score history into a forward record of issued rankings. Capture publication time separately from logical as-of time, exact input snapshot, model version, eligible universe, quality state and a defined reference-price convention.
+**Implemented boundary:** the [approved 1A plan](../exec-plans/active/forward-signal-recording-and-outcomes.md) adds a separate immutable issuance ledger and bounded manual worker commands. Database sealing time is distinct from as-of, knowledge cutoff and creation. Standalone M3 research reconstructions cannot be converted into historical issuances. No live collection or retained-database migration was performed during implementation.
 
-Before evaluating results, freeze the selected horizons, price series and quote units, missing-data policy, benchmark definitions and aggregation rules. The product specification's outcome horizons remain the target set; a subsequent plan must explicitly select its initial subset. Evaluate a market benchmark and a simple relative-strength ordering as proposed comparisons, without inventing their definitions or results here.
+The frozen initial horizons are 1h, 4h, 24h and 7d, with 24h primary for descriptive reporting. Binance spot hourly USDT closes use a reference boundary strictly after issuance. BTC over the same interval and a frozen feature-5 relative-strength ordering are the comparisons. Full hourly coverage, explicit denominators and original quality groups are required. See the plan for exact arithmetic and maturity rules; MFE/MAE remains outside 1A.
 
 Attach returns and, when covered by the subsequent plan, MFE/MAE only after the required observations exist. Jobs must be idempotent and replayable. Retain poor, pending and incomplete results; distinguish originally issued signals from backfilled research. Do not silently replace original inputs with revised provider history.
 

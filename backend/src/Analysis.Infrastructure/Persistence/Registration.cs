@@ -28,6 +28,14 @@ public static class Registration
         services.AddSingleton<IScoringInputReader>(provider => provider.GetRequiredService<ScoringStore>());
         services.AddSingleton<IScoringStore>(provider => provider.GetRequiredService<ScoringStore>());
         services.AddTransient<ScoringJobs>();
+        services.AddSingleton<ForwardStore>();
+        services.AddSingleton<IForwardRecordingStore>(provider => provider.GetRequiredService<ForwardStore>());
+        services.AddSingleton<IForwardOutcomeStore>(provider => provider.GetRequiredService<ForwardStore>());
+        services.AddSingleton<IForwardCollectionStore, ForwardObservationStore>();
+        services.AddSingleton<IForwardRecordReader, ForwardRecordReader>();
+        services.AddTransient<ForwardRecordingJobs>();
+        services.AddTransient<ForwardCollection>();
+        services.AddTransient<ForwardOutcomeJobs>();
         return services;
     }
 }

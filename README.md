@@ -532,6 +532,62 @@ and Chromium timeline traces. It requires `baseline-desktop.json` and
 harness mounted). Baseline evidence and exact results are in the active plan.
 These are lab diagnostics, not field Core Web Vitals or predictive evidence.
 
+## Roadmap 1A: manual forward records
+
+The [1A execution plan](docs/exec-plans/active/forward-signal-recording-and-outcomes.md)
+records the implemented conventions and completed offline verification. Live activation remains
+inactive. No retained database was migrated during implementation. Applying the new
+EF migration and performing any provider acquisition require their own approved
+database and bounded operating scope; prior M2 approval is not continuous approval.
+
+After those operating prerequisites are approved, invoke the existing worker with
+one of these exact argument forms (replace the bracketed UTC values):
+
+| Operation | Worker arguments after the operation flag |
+| --- | --- |
+| `--collect-forward-inputs-once` | `--private-use --country XK --as-of-utc <current-hour-UTC>` |
+| `--issue-forward-once` | `--private-use --country XK --as-of-utc <current-hour-UTC> --model slice1-v1` |
+| `--collect-outcome-prices-once` | `--private-use --country XK --start-utc <closed-hour-UTC> --end-utc <closed-hour-UTC>` |
+| `--measure-outcomes-once` | `--private-use --country XK --start-utc <issued-range-start-UTC> --end-utc <issued-range-end-UTC>` plus optional `--after <returned-cursor>` |
+| `--inspect-forward-records` | `--private-use --country XK --start-utc <issued-range-start-UTC> --end-utc <issued-range-end-UTC>` |
+
+Use UTC ISO timestamps ending in `Z`. Every range is positive and at most seven
+days. Issue within 15 minutes after T, after input collection. Issuance records K,
+creation and I itself, refuses standalone reconstructed batches and returns the
+original on duplicate model/T. All-not-ready and negative records are retained.
+Commands are explicit `docker compose ... run --rm --no-deps worker <arguments>`
+against the approved project/configuration. Only the two collection operations
+need the separately reviewed `compose.m2-private.yaml` egress override. Scoring,
+measurement, inspection, the default worker and the API need no provider access.
+M5 continues to refresh only on user action and does not issue rankings.
+
+Later, collect only required closed candle windows, then measure the original
+issued-time range; continue with `nextCursor` when returned (24 issuances/page).
+The 7d outcome requires 169 candles including the reference, so split collection
+across bounded windows. Pending/incomplete results remain retryable. Inspection
+returns the full history, frozen benchmark groups, paired and per-rank sample
+counts, coverage, exclusions and null unavailable aggregates. Unissued-hour counts
+include only fully elapsed issuance windows wholly inside the requested range.
+
+Returns use Binance spot USDT closes at E and E+H, for H=1/4/24/168h. E is the first
+hour strictly after issuance and `referenceDelayMilliseconds` discloses the delay.
+These are observational fraction returns, not execution returns or trading profit.
+The first completed result remains immutable after provider revisions; disputed
+results and rejected candidates stay visible. Decimal values are JSON strings.
+
+Exit 0 means command success; 2 means malformed/precondition failure; 3 means
+collection gaps/conflicts or a retained all-not-ready issuance; 130 means cancelled;
+1 means failure. Measurement can succeed while outcomes are pending/incomplete:
+use inspection's state counts rather than treating exit 0 as complete market coverage.
+Run events preserve started/completed/failed/cancelled status; a started event
+without a terminal event means interruption or uncertain completion. Inspection
+performs no writes. Retry the same bounded command and inspect its ledger result.
+
+Offline verification: `node scripts/verify-1a.mjs` with pinned Node 24.20.0. A Windows
+portable-runtime fallback is documented in the plan; its evidence and the passing
+Linux container checks are recorded separately. No benchmark performance results
+or predictive claims are established.
+
 ## Production image check and shutdown
 
 This override verifies production artifacts locally; it is not a deployment or

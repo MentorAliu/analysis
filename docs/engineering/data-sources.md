@@ -133,6 +133,18 @@ Not every asset has protocol fundamentals (BTC vs ETH vs SOL). Applicability is 
 
 ## Decisions requiring later validation
 
+**1A implementation boundary (2026-09-07):** existing fixed-origin adapters are
+reused by manual bounded collection commands. Input collection includes Bybit
+funding/OI events at T using its inclusive end parameter T; internal scalar windows
+end at T+1ms. Outcome collection constructs only Binance spot adapters for required
+BTCUSDT/ETHUSDT/SOLUSDT hourly intervals. Quote currency is USDT with no USD parity
+assumption. No new provider capability, key, egress route or continuous worker is
+enabled. Current official endpoint documentation was consulted; access/rights and
+actual coverage must still be reviewed for a separately authorized live run.
+Prior private bounded acquisition approval is not standing authorization. The
+[1A plan](../exec-plans/active/forward-signal-recording-and-outcomes.md) records exact
+windows, transport budgets and the inactive activation boundary.
+
 These are **Unresolved** until an exec plan records evidence:
 
 1. Primary market-data provider and canonical candle/return series.

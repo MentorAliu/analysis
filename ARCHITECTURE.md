@@ -135,6 +135,18 @@ Cache invalidation is a performance concern, not a correctness concern. A cold R
 
 ## Background processing
 
+Roadmap 1A adds explicit manual one-shot commands in the existing worker. Application
+ports own recording, outcome measurement, collection and inspection; infrastructure
+owns EF transactions and provider adapters. The default worker stays operational
+only. No scheduler, service, Redis correctness dependency or frontend polling was
+added. `ForwardStore` captures a database snapshot, calculates outside publication,
+then atomically publishes a fresh scoring bundle and issuance under existing M3
+lock order. Outcome publication serializes by issuance and appends evidence states.
+`ForwardRecordReader` inspects frozen records without writes. The additive EF-owned
+migration and exact boundaries are in the [1A execution plan](docs/exec-plans/active/forward-signal-recording-and-outcomes.md).
+M4/M5 retain their existing contract and manual-refresh behavior; shared Application
+`RankingOrder` keeps original ranking order identical to the API order.
+
 **Implemented M2 (2026-09-06):** the worker supports explicit `--migrate` and
 bounded `--ingest-once --private-use --country XK` commands. One-shot ingestion
 uses the existing Application orchestration and Infrastructure adapters/store;
