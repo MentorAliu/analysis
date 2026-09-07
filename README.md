@@ -33,15 +33,24 @@ results. TypeScript 6.0 is deliberate: the selected linter does not support TS 7
 
 ## Start locally
 
-From the repository root, in PowerShell:
+From the repository root, in PowerShell 7 or newer:
 
 ```powershell
-$nodeImage = 'node:24.20.0-bookworm-slim@sha256:ba849c60be29959425b8734d57b8b4b7d56f98edd9504c9af091d5281095a71e'
-docker run --rm --mount "type=bind,source=$PWD,target=/workspace" --workdir /workspace $nodeImage node scripts/init-local.mjs
-docker compose -p analysis-local config --quiet
-docker compose -p analysis-local up --build --detach --wait --wait-timeout 120
-docker compose -p analysis-local ps
+.\scripts\start-local.ps1
 ```
+
+This command creates missing local configuration, builds with Docker's cache,
+stops any existing local frontend/API/worker, waits for PostgreSQL and Redis,
+applies pending EF migrations with the existing maintenance worker, and starts
+the app only after migration succeeds. Already-applied migrations are skipped.
+If migration fails, the app stays stopped; resolve the error and rerun the command.
+No data is deleted or rolled back. For subsequent starts with unchanged images,
+use `.\scripts\start-local.ps1 -SkipBuild`.
+
+The script targets only `analysis-local` using `.env` and `compose.yaml`.
+Provider acquisition, scoring and forward issuance remain separate explicit
+operations. Prepared forward and retained research projects keep their reviewed
+manual migration workflow. Plain `docker compose up` still does not migrate.
 
 The initializer creates an ignored `.env` with a random local database password;
 it never overwrites an existing file. `.env.example` contains no password. Set
@@ -49,7 +58,8 @@ it never overwrites an existing file. `.env.example` contains no password. Set
 Compose project name to reuse its PostgreSQL volume. Do not change the generated
 password on an existing database without explicitly managing its database role.
 
-- [Frontend](http://127.0.0.1:5173): an empty research workspace with Workspace/About routes.
+- [Frontend](http://127.0.0.1:5173): the private ranking workspace. A fresh database
+  has its schema/catalog but no scoring model or batches until explicitly populated.
 - [API liveness](http://127.0.0.1:5080/api/health/live) and [readiness](http://127.0.0.1:5080/api/health/ready).
 - [Development OpenAPI JSON](http://127.0.0.1:5080/api/openapi/v1.json), emitted as OpenAPI 3.1.1.
 - The same API paths work through the frontend's `/api` proxy.
@@ -223,7 +233,7 @@ the repository, with provenance and exact versions in the active plan.
 ## Development
 
 Default Compose runs Vite in Development, copying frontend source at build time.
-After source edits, run `docker compose -p analysis-local up --build --detach --wait`.
+After source edits, run `.\scripts\start-local.ps1`.
 For host-side frontend hot reload, keep the Compose API running and use the exact
 Node/npm versions:
 

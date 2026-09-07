@@ -135,6 +135,13 @@ Cache invalidation is a performance concern, not a correctness concern. A cold R
 
 ## Background processing
 
+Local app startup uses `scripts/start-local.ps1` to prepare `analysis-local`,
+stop its readers/ordinary worker, apply pending EF migrations through the existing
+`worker --migrate` command, and start services only after success. The base Compose
+file and normal API/worker entrypoints do not migrate automatically. Research and
+forward activation projects retain their explicit reviewed maintenance workflow.
+This orchestration acquires no provider data and creates no scores or issuances.
+
 Roadmap 1A adds explicit manual one-shot commands in the existing worker. Application
 ports own recording, outcome measurement, collection and inspection; infrastructure
 owns EF transactions and provider adapters. The default worker stays operational
